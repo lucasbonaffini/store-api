@@ -6,7 +6,7 @@ export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
-  // Utilizamos singleton para evitar múltiples instancias
+  // Singleton pattern to avoid multiple instances
   private static instance: PrismaService;
 
   constructor() {
@@ -29,8 +29,6 @@ export class PrismaService
       console.log('Database connected successfully via Prisma');
     } catch (error) {
       console.error('Prisma connection error:', error);
-      // Log the error but don't throw it to allow the application to continue
-      // In production, you might want to handle this differently depending on requirements
     }
   }
 
