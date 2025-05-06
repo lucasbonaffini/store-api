@@ -10,7 +10,6 @@ export class PrismaService
   private static instance: PrismaService;
 
   constructor() {
-    // Pass minimal options to avoid issues
     super({
       log: ['error', 'warn'],
     });
