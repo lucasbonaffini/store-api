@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ProductModule } from './infrastructure/config/product.module';
