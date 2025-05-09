@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProductService } from '../../../../src/application/services/product.service';
 import { Product } from '../../../../src/domain/entities/product.entity';
