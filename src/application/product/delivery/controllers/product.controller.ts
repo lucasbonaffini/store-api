@@ -20,7 +20,7 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
-import { ProductService } from '../../application/services/product.service';
+import { IProductService } from '../services/interfaces/product.service.interface';
 import {
   CreateProductDto,
   UpdateStockDto,
@@ -31,11 +31,11 @@ import {
 @Controller('products')
 @UseInterceptors(CacheInterceptor)
 export class ProductController {
-  constructor(private readonly productService: ProductService) {}
+  constructor(private readonly productService: IProductService) {}
 
   @Get()
   @CacheKey('all_products')
-  @CacheTTL(300) // Cache for 5 minutes
+  @CacheTTL(300)
   @ApiOperation({ summary: 'Get all products with stock' })
   @ApiResponse({
     status: 200,
@@ -43,13 +43,12 @@ export class ProductController {
     type: [ProductResponseDto],
   })
   async findAll() {
-    const products = await this.productService.findAll();
-    return products.map((product) => product.toJSON());
+    return this.productService.getProducts();
   }
 
   @Get(':id')
   @CacheKey('product_by_id')
-  @CacheTTL(300) // Cache for 5 minutes
+  @CacheTTL(300)
   @ApiOperation({ summary: 'Get a product by ID' })
   @ApiParam({ name: 'id', description: 'Product ID' })
   @ApiResponse({
@@ -60,8 +59,7 @@ export class ProductController {
   @ApiResponse({ status: 404, description: 'Product not found' })
   async findOne(@Param('id', ParseIntPipe) id: number) {
     try {
-      const product = await this.productService.findById(id);
-      return product.toJSON();
+      return await this.productService.getProductById(id);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -80,8 +78,7 @@ export class ProductController {
   })
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() createProductDto: CreateProductDto) {
-    const product = await this.productService.create(createProductDto);
-    return product.toJSON();
+    return await this.productService.createProduct(createProductDto);
   }
 
   @Put(':id/stock')
@@ -98,8 +95,7 @@ export class ProductController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateStockDto: UpdateStockDto,
   ) {
-    const product = await this.productService.updateStock(id, updateStockDto);
-    return product.toJSON();
+    return await this.productService.updateStock(id, updateStockDto);
   }
 
   @Delete(':id')
@@ -109,6 +105,6 @@ export class ProductController {
   @ApiResponse({ status: 404, description: 'Product not found' })
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id', ParseIntPipe) id: number) {
-    await this.productService.delete(id);
+    await this.productService.deleteProduct(id);
   }
 }
