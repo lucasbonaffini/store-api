@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import {
   ProductResponseDto,
   CreateProductDto,
@@ -17,11 +17,17 @@ import { ProductResponseMapper } from '../../../data/mappers/product-response.ma
 @Injectable()
 export class ProductService implements IProductService {
   constructor(
+    @Inject('ICreateProductUseCase')
     private readonly createProductUseCase: ICreateProductUseCase,
+    @Inject('IGetProductsUseCase')
     private readonly getProductsUseCase: IGetProductsUseCase,
+    @Inject('IGetProductByIdUseCase')
     private readonly getProductByIdUseCase: IGetProductByIdUseCase,
+    @Inject('IUpdateStockUseCase')
     private readonly updateStockUseCase: IUpdateStockUseCase,
+    @Inject('IDeleteProductUseCase')
     private readonly deleteProductUseCase: IDeleteProductUseCase,
+    @Inject(ProductResponseMapper)
     private readonly productResponseMapper: ProductResponseMapper,
   ) {}
 

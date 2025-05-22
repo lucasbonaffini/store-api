@@ -14,39 +14,34 @@ import { PrismaModule } from '../database/prisma/prisma.module';
 import { FakeStoreModule } from '../adapters/fakestore/fakestore.module';
 import { CacheModule } from '../cache/cache.module';
 
-import {
-  ICreateProductUseCase,
-  IDeleteProductUseCase,
-  IGetProductByIdUseCase,
-  IGetProductsUseCase,
-  IUpdateStockUseCase,
-} from 'src/application/product/use-cases/interfaces/product-use-case.interface';
-
 @Module({
   imports: [PrismaModule, FakeStoreModule, CacheModule],
   controllers: [ProductController],
   providers: [
     ProductResponseMapper,
-    ProductService,
+    {
+      provide: 'IProductService',
+      useClass: ProductService,
+    },
 
     {
-      provide: ICreateProductUseCase,
+      provide: 'ICreateProductUseCase',
       useClass: CreateProductUseCase,
     },
     {
-      provide: IDeleteProductUseCase,
+      provide: 'IDeleteProductUseCase',
       useClass: DeleteProductUseCase,
     },
     {
-      provide: IGetProductByIdUseCase,
+      provide: 'IGetProductByIdUseCase',
       useClass: GetProductByIdUseCase,
     },
     {
-      provide: IGetProductsUseCase,
+      provide: 'IGetProductsUseCase',
       useClass: GetProductsUseCase,
     },
     {
-      provide: IUpdateStockUseCase,
+      provide: 'IUpdateStockUseCase',
       useClass: UpdateStockUseCase,
     },
 
@@ -55,6 +50,6 @@ import {
       useClass: PrismaProductRepository,
     },
   ],
-  exports: [ProductService],
+  exports: ['IProductService'],
 })
 export class ProductModule {}

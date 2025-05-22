@@ -3,7 +3,6 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Product } from '../../domain/entities/product.entity';
 import { ProductRepository } from '../../data/repositories/product-repository.interface';
-import { FakeStoreService } from '../../../../infrastructure/adapters/fakestore/fakestore.service';
 import { ProductNotFoundException } from '../../domain/exceptions';
 import { IUpdateStockUseCase } from '../interfaces/product-use-case.interface';
 
@@ -12,7 +11,6 @@ export class UpdateStockUseCase implements IUpdateStockUseCase {
   constructor(
     @Inject('ProductRepository')
     private readonly productRepository: ProductRepository,
-    private readonly fakeStoreService: FakeStoreService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 

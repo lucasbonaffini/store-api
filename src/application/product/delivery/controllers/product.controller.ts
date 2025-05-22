@@ -11,6 +11,7 @@ import {
   NotFoundException,
   ParseIntPipe,
   UseInterceptors,
+  Inject,
 } from '@nestjs/common';
 import { CacheKey, CacheTTL, CacheInterceptor } from '@nestjs/cache-manager';
 import {
@@ -31,7 +32,9 @@ import {
 @Controller('products')
 @UseInterceptors(CacheInterceptor)
 export class ProductController {
-  constructor(private readonly productService: IProductService) {}
+  constructor(
+    @Inject('IProductService') private readonly productService: IProductService,
+  ) {}
 
   @Get()
   @CacheKey('all_products')

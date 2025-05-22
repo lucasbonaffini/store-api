@@ -11,6 +11,7 @@ export class DeleteProductUseCase implements IDeleteProductUseCase {
   constructor(
     @Inject('ProductRepository')
     private readonly productRepository: ProductRepository,
+    @Inject(FakeStoreService)
     private readonly fakeStoreService: FakeStoreService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
