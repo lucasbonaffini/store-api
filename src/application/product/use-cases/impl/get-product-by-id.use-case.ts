@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument*/
 import { Injectable, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
@@ -10,6 +9,7 @@ import {
   ExternalServiceException,
 } from '../../domain/exceptions';
 import { IGetProductByIdUseCase } from '../interfaces/product-use-case.interface';
+import { Result } from 'src/application/types/result';
 
 @Injectable()
 export class GetProductByIdUseCase implements IGetProductByIdUseCase {
@@ -21,37 +21,48 @@ export class GetProductByIdUseCase implements IGetProductByIdUseCase {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
-  async execute(id: number): Promise<Product> {
+  async execute(
+    id: number,
+  ): Promise<
+    Result<Product, ProductNotFoundException | ExternalServiceException>
+  > {
     const cacheKey = `product_${id}`;
     const cachedProduct = await this.cacheManager.get<Product>(cacheKey);
 
     if (cachedProduct) {
-      return cachedProduct;
+      return { type: 'success', value: cachedProduct };
     }
 
     const localProduct = await this.productRepository.findById(id);
 
     if (localProduct) {
       await this.cacheManager.set(cacheKey, localProduct, 3600);
-      return localProduct;
+      return { type: 'success', value: localProduct };
     }
 
     try {
       const fakeStoreProduct = await this.fakeStoreService.getProductById(id);
 
       if (!fakeStoreProduct) {
-        throw new ProductNotFoundException(id);
+        const error = new ProductNotFoundException(id);
+        return { type: 'error', throwable: error };
       }
 
       const product = Product.fromFakeStore(fakeStoreProduct);
 
       await this.cacheManager.set(cacheKey, product, 3600);
-      return product;
+      return { type: 'success', value: product };
     } catch (error) {
       if (error instanceof ProductNotFoundException) {
-        throw error;
+        return { type: 'error', throwable: error };
       }
-      throw new ExternalServiceException('FakeStore API', error);
+      const serviceError =
+        error instanceof Error ? error : new Error(String(error));
+      const externalError = new ExternalServiceException(
+        'FakeStore API',
+        serviceError,
+      );
+      return { type: 'error', throwable: externalError };
     }
   }
 }

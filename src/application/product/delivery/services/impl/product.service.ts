@@ -32,34 +32,50 @@ export class ProductService implements IProductService {
   ) {}
 
   async getProducts(): Promise<ProductResponseDto[]> {
-    const products = await this.getProductsUseCase.execute();
-    return this.productResponseMapper.toResponseDtoList(products);
+    const result = await this.getProductsUseCase.execute();
+    if (result.type === 'error') {
+      throw result.throwable;
+    }
+    return this.productResponseMapper.toResponseDtoList(result.value);
   }
 
   async getProductById(id: number): Promise<ProductResponseDto> {
-    const product = await this.getProductByIdUseCase.execute(id);
-    return this.productResponseMapper.toResponseDto(product);
+    const result = await this.getProductByIdUseCase.execute(id);
+    if (result.type === 'error') {
+      throw result.throwable;
+    }
+    return this.productResponseMapper.toResponseDto(result.value);
   }
 
   async createProduct(
     createProductDto: CreateProductDto,
   ): Promise<ProductResponseDto> {
-    const product = await this.createProductUseCase.execute(createProductDto);
-    return this.productResponseMapper.toResponseDto(product);
+    const result = await this.createProductUseCase.execute(createProductDto);
+    if (result.type === 'error') {
+      throw result.throwable;
+    }
+    return this.productResponseMapper.toResponseDto(result.value);
   }
 
   async updateStock(
     id: number,
     updateStockDto: UpdateStockDto,
   ): Promise<ProductResponseDto> {
-    const product = await this.updateStockUseCase.execute(
+    const result = await this.updateStockUseCase.execute(
       id,
       updateStockDto.stock,
     );
-    return this.productResponseMapper.toResponseDto(product);
+    if (result.type === 'error') {
+      throw result.throwable;
+    }
+    return this.productResponseMapper.toResponseDto(result.value);
   }
 
   async deleteProduct(id: number): Promise<void> {
-    await this.deleteProductUseCase.execute(id);
+    const result = await this.deleteProductUseCase.execute(id);
+    if (result.type === 'error') {
+      throw result.throwable;
+    }
+    return result.value;
   }
 }

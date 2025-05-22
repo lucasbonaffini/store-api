@@ -5,7 +5,7 @@ import { Product } from '../../domain/entities/product.entity';
 import { ProductRepository } from '../../data/repositories/product-repository.interface';
 import { ProductNotFoundException } from '../../domain/exceptions';
 import { IUpdateStockUseCase } from '../interfaces/product-use-case.interface';
-
+import { Result } from 'src/application/types/result';
 @Injectable()
 export class UpdateStockUseCase implements IUpdateStockUseCase {
   constructor(
@@ -14,11 +14,15 @@ export class UpdateStockUseCase implements IUpdateStockUseCase {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
-  async execute(id: number, stock: number): Promise<Product> {
+  async execute(
+    id: number,
+    stock: number,
+  ): Promise<Result<Product, ProductNotFoundException>> {
     const productExists = await this.productRepository.exists(id);
 
     if (!productExists) {
-      throw new ProductNotFoundException(id);
+      const error = new ProductNotFoundException(id);
+      return { type: 'error', throwable: error };
     }
 
     const updatedProduct = await this.productRepository.updateStock(id, stock);
@@ -26,6 +30,6 @@ export class UpdateStockUseCase implements IUpdateStockUseCase {
     await this.cacheManager.del(`product_${id}`);
     await this.cacheManager.del('all_products');
 
-    return updatedProduct;
+    return { type: 'success', value: updatedProduct };
   }
 }

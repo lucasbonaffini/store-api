@@ -7,6 +7,7 @@ import { ProductRepository } from '../../data/repositories/product-repository.in
 import { FakeStoreService } from '../../../../infrastructure/adapters/fakestore/fakestore.service';
 import { ExternalServiceException } from '../../domain/exceptions';
 import { IGetProductsUseCase } from '../interfaces/product-use-case.interface';
+import { Result } from 'src/application/types/result';
 
 @Injectable()
 export class GetProductsUseCase implements IGetProductsUseCase {
@@ -18,18 +19,18 @@ export class GetProductsUseCase implements IGetProductsUseCase {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
-  async execute(): Promise<Product[]> {
+  async execute(): Promise<Result<Product[], ExternalServiceException>> {
     const cachedProducts =
       await this.cacheManager.get<Product[]>('all_products');
     if (cachedProducts) {
-      return cachedProducts;
+      return { type: 'success', value: cachedProducts };
     }
 
     const localProducts = await this.productRepository.findAll();
 
     if (localProducts.length > 0) {
       await this.cacheManager.set('all_products', localProducts, 3600);
-      return localProducts;
+      return { type: 'success', value: localProducts };
     }
 
     try {
@@ -39,9 +40,13 @@ export class GetProductsUseCase implements IGetProductsUseCase {
       );
 
       await this.cacheManager.set('all_products', products, 3600);
-      return products;
+      return { type: 'success', value: products };
     } catch (error) {
-      throw new ExternalServiceException('FakeStore API', error);
+      const externalError = new ExternalServiceException(
+        'FakeStore API',
+        error,
+      );
+      return { type: 'error', throwable: externalError };
     }
   }
 }

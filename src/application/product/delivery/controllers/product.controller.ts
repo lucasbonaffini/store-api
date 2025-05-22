@@ -8,7 +8,6 @@ import {
   Param,
   HttpCode,
   HttpStatus,
-  NotFoundException,
   ParseIntPipe,
   UseInterceptors,
   Inject,
@@ -61,14 +60,7 @@ export class ProductController {
   })
   @ApiResponse({ status: 404, description: 'Product not found' })
   async findOne(@Param('id', ParseIntPipe) id: number) {
-    try {
-      return await this.productService.getProductById(id);
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      throw new NotFoundException(`Product with ID ${id} not found`);
-    }
+    return await this.productService.getProductById(id);
   }
 
   @Post()
