@@ -2,7 +2,7 @@ import {
   ProductResponseDto,
   CreateProductDto,
   UpdateStockDto,
-} from 'src/application/dtos/product.dto';
+} from 'src/application/product/delivery/dtos/product.dto';
 
 export abstract class IProductService {
   abstract getProducts(): Promise<ProductResponseDto[]>;

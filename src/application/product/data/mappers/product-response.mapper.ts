@@ -1,6 +1,5 @@
-// delivery/mappers/product-response.mapper.ts
 import { Injectable } from '@nestjs/common';
-import { ProductResponseDto } from 'src/application/dtos/product.dto';
+import { ProductResponseDto } from 'src/application/product/delivery/dtos/product.dto';
 import { Product } from 'src/application/product/domain/entities/product.entity';
 
 @Injectable()

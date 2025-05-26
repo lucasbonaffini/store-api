@@ -5,7 +5,7 @@ import { ProductService } from '../../../../src/application/product/use-cases/pr
 import {
   CreateProductDto,
   UpdateStockDto,
-} from '../../../../src/application/dtos/product.dto';
+} from '../../../../src/application/product/delivery/dtos/product.dto';
 import { Product } from '../../../../src/application/product/domain/entities/product.entity';
 
 describe('ProductController', () => {

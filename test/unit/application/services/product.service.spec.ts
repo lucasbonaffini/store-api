@@ -4,7 +4,7 @@ import { Product } from '../../../../src/application/product/domain/entities/pro
 import {
   CreateProductDto,
   UpdateStockDto,
-} from '../../../../src/application/dtos/product.dto';
+} from '../../../../src/application/product/delivery/dtos/product.dto';
 import { ProductNotFoundException } from '../../../../src/application/product/domain/exceptions';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { FakeStoreService } from '../../../../src/infrastructure/adapters/fakestore/fakestore.service';

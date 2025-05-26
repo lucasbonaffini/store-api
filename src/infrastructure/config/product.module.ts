@@ -9,7 +9,7 @@ import { GetProductByIdUseCase } from 'src/application/product/use-cases/impl/ge
 import { GetProductsUseCase } from 'src/application/product/use-cases/impl/get-products.use-case';
 import { UpdateStockUseCase } from 'src/application/product/use-cases/impl/update-stock.use-case';
 
-import { PrismaProductRepository } from '../repositories/prisma-product.repository';
+import { PrismaProductDataSource } from '../datasource/prisma-product.datasource';
 import { PrismaModule } from '../database/prisma/prisma.module';
 import { FakeStoreModule } from '../adapters/fakestore/fakestore.module';
 import { CacheModule } from '../cache/cache.module';
@@ -47,7 +47,7 @@ import { CacheModule } from '../cache/cache.module';
 
     {
       provide: 'ProductRepository',
-      useClass: PrismaProductRepository,
+      useClass: PrismaProductDataSource,
     },
   ],
   exports: ['IProductService'],

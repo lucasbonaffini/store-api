@@ -3,8 +3,8 @@ import {
   ProductResponseDto,
   CreateProductDto,
   UpdateStockDto,
-} from 'src/application/dtos/product.dto';
-import { IProductService } from '../interfaces/product.service.interface';
+} from 'src/application/product/delivery/dtos/product.dto';
+import { IProductService } from '../../controllers/interfaces/product.service.interface';
 import {
   ICreateProductUseCase,
   IGetProductsUseCase,
@@ -12,7 +12,6 @@ import {
   IUpdateStockUseCase,
   IDeleteProductUseCase,
 } from 'src/application/product/use-cases/interfaces/product-use-case.interface';
-import { ProductResponseMapper } from '../../../data/mappers/product-response.mapper';
 
 @Injectable()
 export class ProductService implements IProductService {
@@ -27,8 +26,6 @@ export class ProductService implements IProductService {
     private readonly updateStockUseCase: IUpdateStockUseCase,
     @Inject('IDeleteProductUseCase')
     private readonly deleteProductUseCase: IDeleteProductUseCase,
-    @Inject(ProductResponseMapper)
-    private readonly productResponseMapper: ProductResponseMapper,
   ) {}
 
   async getProducts(): Promise<ProductResponseDto[]> {
@@ -36,7 +33,7 @@ export class ProductService implements IProductService {
     if (result.type === 'error') {
       throw result.throwable;
     }
-    return this.productResponseMapper.toResponseDtoList(result.value);
+    return result.value;
   }
 
   async getProductById(id: number): Promise<ProductResponseDto> {
@@ -44,7 +41,7 @@ export class ProductService implements IProductService {
     if (result.type === 'error') {
       throw result.throwable;
     }
-    return this.productResponseMapper.toResponseDto(result.value);
+    return result.value;
   }
 
   async createProduct(
@@ -54,21 +51,18 @@ export class ProductService implements IProductService {
     if (result.type === 'error') {
       throw result.throwable;
     }
-    return this.productResponseMapper.toResponseDto(result.value);
+    return result.value;
   }
 
   async updateStock(
     id: number,
     updateStockDto: UpdateStockDto,
   ): Promise<ProductResponseDto> {
-    const result = await this.updateStockUseCase.execute(
-      id,
-      updateStockDto.stock,
-    );
+    const result = await this.updateStockUseCase.execute(id, updateStockDto);
     if (result.type === 'error') {
       throw result.throwable;
     }
-    return this.productResponseMapper.toResponseDto(result.value);
+    return result.value;
   }
 
   async deleteProduct(id: number): Promise<void> {

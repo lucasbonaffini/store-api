@@ -1,25 +1,52 @@
-import { Product } from '../../domain/entities/product.entity';
-import { CreateProductDto } from '../../../dtos/product.dto';
-import { Result } from 'src/application/types/result';
+import {
+  CreateProductDto,
+  UpdateStockDto,
+  ProductResponseDto,
+} from '../../delivery/dtos/product.dto';
+import {
+  ProductNotFoundException,
+  ExternalServiceException,
+  DatabaseException,
+  InvalidProductDataException,
+} from '../../domain/exceptions';
+import { Result } from '../../../types/result';
 
-export abstract class ICreateProductUseCase {
-  abstract execute(
+export interface IGetProductsUseCase {
+  execute(): Promise<
+    Result<ProductResponseDto[], ExternalServiceException | DatabaseException>
+  >;
+}
+
+export interface IGetProductByIdUseCase {
+  execute(
+    id: number,
+  ): Promise<
+    Result<
+      ProductResponseDto,
+      ProductNotFoundException | ExternalServiceException | DatabaseException
+    >
+  >;
+}
+
+export interface ICreateProductUseCase {
+  execute(
     createProductDto: CreateProductDto,
-  ): Promise<Result<Product, Error>>;
+  ): Promise<
+    Result<ProductResponseDto, InvalidProductDataException | DatabaseException>
+  >;
 }
 
-export abstract class IGetProductsUseCase {
-  abstract execute(): Promise<Result<Product[], Error>>;
+export interface IUpdateStockUseCase {
+  execute(
+    id: number,
+    updateStockDto: UpdateStockDto,
+  ): Promise<
+    Result<ProductResponseDto, ProductNotFoundException | DatabaseException>
+  >;
 }
 
-export abstract class IGetProductByIdUseCase {
-  abstract execute(id: number): Promise<Result<Product, Error>>;
-}
-
-export abstract class IUpdateStockUseCase {
-  abstract execute(id: number, stock: number): Promise<Result<Product, Error>>;
-}
-
-export abstract class IDeleteProductUseCase {
-  abstract execute(id: number): Promise<Result<void, Error>>;
+export interface IDeleteProductUseCase {
+  execute(
+    id: number,
+  ): Promise<Result<void, ProductNotFoundException | DatabaseException>>;
 }
