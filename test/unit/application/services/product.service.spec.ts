@@ -7,7 +7,7 @@ import {
 } from '../../../../src/application/product/delivery/dtos/product.dto';
 import { ProductNotFoundException } from '../../../../src/application/product/domain/exceptions';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { FakeStoreService } from '../../../../src/infrastructure/adapters/fakestore/fakestore.service';
+import { FakeStoreDataSource } from '../../../../src/application/product/infrastructure/datasources/adapters/fakestore/fakestore.datasource';
 
 describe('ProductService', () => {
   let service: ProductService;
@@ -72,7 +72,7 @@ describe('ProductService', () => {
           useValue: mockCacheManager,
         },
         {
-          provide: FakeStoreService,
+          provide: FakeStoreDataSource,
           useValue: mockFakeStoreService,
         },
       ],

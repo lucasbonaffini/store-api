@@ -5,7 +5,7 @@ import { AxiosError } from 'axios';
 import { FakeStoreProduct } from './fakestore.types';
 
 @Injectable()
-export class FakeStoreService {
+export class FakeStoreDataSource {
   private readonly baseUrl = 'https://fakestoreapi.com';
 
   constructor(private readonly httpService: HttpService) {}

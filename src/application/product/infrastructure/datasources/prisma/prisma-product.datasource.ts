@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { Product } from '../../application/product/domain/entities/product.entity';
-import { IProductDataSource } from './interfaces/product-datasource.interface';
-import { PrismaService } from '../database/prisma/prisma.service';
-import { DatabaseException } from '../../application/product/domain/exceptions';
+import { Product } from '../../../domain/entities/product.entity';
+import { IProductDataSource } from '../../../data/repositories/interfaces/product-datasource.interface';
+import { PrismaService } from './prisma.service';
+import { Result } from '../../../../core/types/result';
 
 @Injectable()
 export class PrismaProductDataSource implements IProductDataSource {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(): Promise<Product[]> {
+  async findAll(): Promise<Result<Product[], Error>> {
     try {
       const products = await this.prisma.product.findMany();
-      return products.map(
+      const productEntities = products.map(
         (product) =>
           new Product(
             product.id,
@@ -25,25 +25,24 @@ export class PrismaProductDataSource implements IProductDataSource {
             product.updatedAt,
           ),
       );
+
+      return { type: 'success', value: productEntities };
     } catch (error) {
-      throw new DatabaseException(
-        'Error fetching products from database',
-        error,
-      );
+      return { type: 'error', throwable: error as Error };
     }
   }
 
-  async findById(id: number): Promise<Product | null> {
+  async findById(id: number): Promise<Result<Product | null, Error>> {
     try {
       const product = await this.prisma.product.findUnique({
         where: { id },
       });
 
       if (!product) {
-        return null;
+        return { type: 'success', value: null };
       }
 
-      return new Product(
+      const productEntity = new Product(
         product.id,
         product.title,
         product.price,
@@ -54,15 +53,14 @@ export class PrismaProductDataSource implements IProductDataSource {
         product.createdAt,
         product.updatedAt,
       );
+
+      return { type: 'success', value: productEntity };
     } catch (error) {
-      throw new DatabaseException(
-        `Error fetching product with id ${id}`,
-        error,
-      );
+      return { type: 'error', throwable: error as Error };
     }
   }
 
-  async create(product: Product): Promise<Product> {
+  async create(product: Product): Promise<Result<Product, Error>> {
     try {
       const createdProduct = await this.prisma.product.create({
         data: {
@@ -75,7 +73,7 @@ export class PrismaProductDataSource implements IProductDataSource {
         },
       });
 
-      return new Product(
+      const productEntity = new Product(
         createdProduct.id,
         createdProduct.title,
         createdProduct.price,
@@ -86,12 +84,14 @@ export class PrismaProductDataSource implements IProductDataSource {
         createdProduct.createdAt,
         createdProduct.updatedAt,
       );
+
+      return { type: 'success', value: productEntity };
     } catch (error) {
-      throw new DatabaseException('Error creating product in database', error);
+      return { type: 'error', throwable: error as Error };
     }
   }
 
-  async update(product: Product): Promise<Product> {
+  async update(product: Product): Promise<Result<Product, Error>> {
     try {
       const updatedProduct = await this.prisma.product.update({
         where: { id: product.id },
@@ -105,7 +105,7 @@ export class PrismaProductDataSource implements IProductDataSource {
         },
       });
 
-      return new Product(
+      const productEntity = new Product(
         updatedProduct.id,
         updatedProduct.title,
         updatedProduct.price,
@@ -116,22 +116,24 @@ export class PrismaProductDataSource implements IProductDataSource {
         updatedProduct.createdAt,
         updatedProduct.updatedAt,
       );
+
+      return { type: 'success', value: productEntity };
     } catch (error) {
-      throw new DatabaseException(
-        `Error updating product with id ${product.id}`,
-        error,
-      );
+      return { type: 'error', throwable: error as Error };
     }
   }
 
-  async updateStock(id: number, stock: number): Promise<Product> {
+  async updateStock(
+    id: number,
+    stock: number,
+  ): Promise<Result<Product, Error>> {
     try {
       const updatedProduct = await this.prisma.product.update({
         where: { id },
         data: { stock },
       });
 
-      return new Product(
+      const productEntity = new Product(
         updatedProduct.id,
         updatedProduct.title,
         updatedProduct.price,
@@ -142,38 +144,34 @@ export class PrismaProductDataSource implements IProductDataSource {
         updatedProduct.createdAt,
         updatedProduct.updatedAt,
       );
+
+      return { type: 'success', value: productEntity };
     } catch (error) {
-      throw new DatabaseException(
-        `Error updating stock for product with id ${id}`,
-        error,
-      );
+      return { type: 'error', throwable: error as Error };
     }
   }
 
-  async delete(id: number): Promise<void> {
+  async delete(id: number): Promise<Result<void, Error>> {
     try {
       await this.prisma.product.delete({
         where: { id },
       });
+
+      return { type: 'success', value: undefined };
     } catch (error) {
-      throw new DatabaseException(
-        `Error deleting product with id ${id}`,
-        error,
-      );
+      return { type: 'error', throwable: error as Error };
     }
   }
 
-  async exists(id: number): Promise<boolean> {
+  async exists(id: number): Promise<Result<boolean, Error>> {
     try {
       const count = await this.prisma.product.count({
         where: { id },
       });
-      return count > 0;
+
+      return { type: 'success', value: count > 0 };
     } catch (error) {
-      throw new DatabaseException(
-        `Error checking if product exists with id ${id}`,
-        error,
-      );
+      return { type: 'error', throwable: error as Error };
     }
   }
 }

@@ -3,13 +3,10 @@ import {
   ProductResponseDto,
   UpdateStockDto,
 } from '../../delivery/dtos/product.dto';
-import { IProductRepository } from '../../data/repositories/interfaces/product-repository.interface';
-import {
-  ProductNotFoundException,
-  DatabaseException,
-} from '../../domain/exceptions';
-import { IUpdateStockUseCase } from '../interfaces/product-use-case.interface';
-import { Result } from 'src/application/types/result';
+import { IProductRepository } from '../interfaces/product-repository.interface';
+import { ProductNotFoundException } from '../../domain/exceptions';
+import { IUpdateStockUseCase } from '../../delivery/services/interfaces/product-use-case.interface';
+import { Result } from 'src/application/core/types/result';
 
 @Injectable()
 export class UpdateStockUseCase implements IUpdateStockUseCase {
@@ -21,9 +18,7 @@ export class UpdateStockUseCase implements IUpdateStockUseCase {
   async execute(
     id: number,
     updateStockDto: UpdateStockDto,
-  ): Promise<
-    Result<ProductResponseDto, ProductNotFoundException | DatabaseException>
-  > {
+  ): Promise<Result<ProductResponseDto, ProductNotFoundException | Error>> {
     return await this.productRepository.updateStock(id, updateStockDto.stock);
   }
 }

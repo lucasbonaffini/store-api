@@ -8,10 +8,10 @@ import { IProductService } from '../../controllers/interfaces/product.service.in
 import {
   ICreateProductUseCase,
   IGetProductsUseCase,
-  IGetProductByIdUseCase,
   IUpdateStockUseCase,
   IDeleteProductUseCase,
-} from 'src/application/product/use-cases/interfaces/product-use-case.interface';
+} from 'src/application/product/delivery/services/interfaces/product-use-case.interface';
+import { ErrorMapperService } from 'src/application/product/data/mappers/error-maper.service';
 
 @Injectable()
 export class ProductService implements IProductService {
@@ -20,27 +20,38 @@ export class ProductService implements IProductService {
     private readonly createProductUseCase: ICreateProductUseCase,
     @Inject('IGetProductsUseCase')
     private readonly getProductsUseCase: IGetProductsUseCase,
-    @Inject('IGetProductByIdUseCase')
-    private readonly getProductByIdUseCase: IGetProductByIdUseCase,
     @Inject('IUpdateStockUseCase')
     private readonly updateStockUseCase: IUpdateStockUseCase,
     @Inject('IDeleteProductUseCase')
     private readonly deleteProductUseCase: IDeleteProductUseCase,
+    @Inject(ErrorMapperService)
+    private readonly errorMapper: ErrorMapperService,
   ) {}
 
   async getProducts(): Promise<ProductResponseDto[]> {
     const result = await this.getProductsUseCase.execute();
+
     if (result.type === 'error') {
-      throw result.throwable;
+      const mappedError = this.errorMapper.mapProductFetchError(
+        result.throwable,
+      );
+      throw mappedError;
     }
+
     return result.value;
   }
 
   async getProductById(id: number): Promise<ProductResponseDto> {
-    const result = await this.getProductByIdUseCase.execute(id);
+    const result = await this.getProductsUseCase.executeById(id);
+
     if (result.type === 'error') {
-      throw result.throwable;
+      const mappedError = this.errorMapper.mapProductFetchByIdError(
+        result.throwable,
+        id,
+      );
+      throw mappedError;
     }
+
     return result.value;
   }
 
@@ -48,9 +59,14 @@ export class ProductService implements IProductService {
     createProductDto: CreateProductDto,
   ): Promise<ProductResponseDto> {
     const result = await this.createProductUseCase.execute(createProductDto);
+
     if (result.type === 'error') {
-      throw result.throwable;
+      const mappedError = this.errorMapper.mapProductCreateError(
+        result.throwable,
+      );
+      throw mappedError;
     }
+
     return result.value;
   }
 
@@ -59,17 +75,29 @@ export class ProductService implements IProductService {
     updateStockDto: UpdateStockDto,
   ): Promise<ProductResponseDto> {
     const result = await this.updateStockUseCase.execute(id, updateStockDto);
+
     if (result.type === 'error') {
-      throw result.throwable;
+      const mappedError = this.errorMapper.mapStockUpdateError(
+        result.throwable,
+        id,
+      );
+      throw mappedError;
     }
+
     return result.value;
   }
 
   async deleteProduct(id: number): Promise<void> {
     const result = await this.deleteProductUseCase.execute(id);
+
     if (result.type === 'error') {
-      throw result.throwable;
+      const mappedError = this.errorMapper.mapProductDeleteError(
+        result.throwable,
+        id,
+      );
+      throw mappedError;
     }
+
     return result.value;
   }
 }

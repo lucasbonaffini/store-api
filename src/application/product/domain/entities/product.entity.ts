@@ -1,4 +1,4 @@
-import { FakeStoreProduct } from 'src/infrastructure/adapters/fakestore/fakestore.types';
+import { FakeStoreProduct } from 'src/application/product/infrastructure/datasources/adapters/fakestore/fakestore.types';
 
 export class Product {
   private readonly _id: number;

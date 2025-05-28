@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
-import { FakeStoreService } from './fakestore.service';
+import { FakeStoreDataSource } from './fakestore.datasource';
 
 @Module({
   imports: [
@@ -9,7 +9,7 @@ import { FakeStoreService } from './fakestore.service';
       maxRedirects: 5,
     }),
   ],
-  providers: [FakeStoreService],
-  exports: [FakeStoreService],
+  providers: [FakeStoreDataSource],
+  exports: [FakeStoreDataSource],
 })
 export class FakeStoreModule {}

@@ -1,11 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { IProductRepository } from '../../data/repositories/interfaces/product-repository.interface';
-import {
-  ProductNotFoundException,
-  DatabaseException,
-} from '../../domain/exceptions';
-import { IDeleteProductUseCase } from '../interfaces/product-use-case.interface';
-import { Result } from 'src/application/types/result';
+import { IProductRepository } from '../interfaces/product-repository.interface';
+import { ProductNotFoundException } from '../../domain/exceptions';
+import { IDeleteProductUseCase } from '../../delivery/services/interfaces/product-use-case.interface';
+import { Result } from 'src/application/core/types/result';
 
 @Injectable()
 export class DeleteProductUseCase implements IDeleteProductUseCase {
@@ -16,7 +13,7 @@ export class DeleteProductUseCase implements IDeleteProductUseCase {
 
   async execute(
     id: number,
-  ): Promise<Result<void, ProductNotFoundException | DatabaseException>> {
+  ): Promise<Result<void, ProductNotFoundException | Error>> {
     return await this.productRepository.deleteProduct(id);
   }
 }

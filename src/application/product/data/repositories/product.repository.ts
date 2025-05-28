@@ -2,25 +2,24 @@ import { Injectable, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Product } from '../../domain/entities/product.entity';
-import { IProductRepository } from './interfaces/product-repository.interface';
-import { IProductDataSource } from './../../../../infrastructure/datasource/interfaces/product-datasource.interface';
-import { FakeStoreService } from './../../../../infrastructure/adapters/fakestore/fakestore.service';
+import { IProductRepository } from '../../use-cases/interfaces/product-repository.interface';
+import { IProductDataSource } from './interfaces/product-datasource.interface';
+import { FakeStoreDataSource } from '../../infrastructure/datasources/adapters/fakestore/fakestore.datasource';
 import { ProductResponseMapper } from '../mappers/product-response.mapper';
 import { ProductResponseDto } from '../../delivery/dtos/product.dto';
 import {
   ProductNotFoundException,
   ExternalServiceException,
-  DatabaseException,
 } from '../../domain/exceptions';
-import { Result } from '../../../types/result';
+import { Result } from 'src/application/core/types/result';
 
 @Injectable()
 export class ProductRepository implements IProductRepository {
   constructor(
     @Inject('IProductDataSource')
-    private readonly dataSource: IProductDataSource,
-    @Inject(FakeStoreService)
-    private readonly fakeStoreService: FakeStoreService,
+    private readonly prismaDataSource: IProductDataSource,
+    @Inject(FakeStoreDataSource)
+    private readonly fakeStoreDataSource: FakeStoreDataSource,
     @Inject(CACHE_MANAGER)
     private cacheManager: Cache,
     @Inject(ProductResponseMapper)
@@ -28,7 +27,7 @@ export class ProductRepository implements IProductRepository {
   ) {}
 
   async getProducts(): Promise<
-    Result<ProductResponseDto[], ExternalServiceException | DatabaseException>
+    Result<ProductResponseDto[], ExternalServiceException | Error>
   > {
     const cachedProducts =
       await this.cacheManager.get<ProductResponseDto[]>('all_products');
@@ -36,7 +35,13 @@ export class ProductRepository implements IProductRepository {
       return { type: 'success', value: cachedProducts };
     }
 
-    const localProducts = await this.dataSource.findAll();
+    const localProductsResult = await this.prismaDataSource.findAll();
+
+    if (localProductsResult.type === 'error') {
+      return localProductsResult;
+    }
+
+    const localProducts = localProductsResult.value;
 
     if (localProducts.length > 0) {
       const responseDto = this.mapper.toResponseDtoList(localProducts);
@@ -44,7 +49,7 @@ export class ProductRepository implements IProductRepository {
       return { type: 'success', value: responseDto };
     }
 
-    const fakeStoreProducts = await this.fakeStoreService.getProducts();
+    const fakeStoreProducts = await this.fakeStoreDataSource.getProducts();
     const products = fakeStoreProducts.map((product) =>
       Product.fromFakeStore(product),
     );
@@ -59,7 +64,7 @@ export class ProductRepository implements IProductRepository {
   ): Promise<
     Result<
       ProductResponseDto,
-      ProductNotFoundException | ExternalServiceException | DatabaseException
+      ProductNotFoundException | ExternalServiceException | Error
     >
   > {
     const cacheKey = `product_${id}`;
@@ -70,7 +75,13 @@ export class ProductRepository implements IProductRepository {
       return { type: 'success', value: cachedProduct };
     }
 
-    const localProduct = await this.dataSource.findById(id);
+    const localProductResult = await this.prismaDataSource.findById(id);
+
+    if (localProductResult.type === 'error') {
+      return localProductResult;
+    }
+
+    const localProduct = localProductResult.value;
 
     if (localProduct) {
       const responseDto = this.mapper.toResponseDto(localProduct);
@@ -78,7 +89,7 @@ export class ProductRepository implements IProductRepository {
       return { type: 'success', value: responseDto };
     }
 
-    const fakeStoreProduct = await this.fakeStoreService.getProductById(id);
+    const fakeStoreProduct = await this.fakeStoreDataSource.getProductById(id);
 
     if (!fakeStoreProduct) {
       const error = new ProductNotFoundException(id);
@@ -94,8 +105,14 @@ export class ProductRepository implements IProductRepository {
 
   async createProduct(
     product: Product,
-  ): Promise<Result<ProductResponseDto, DatabaseException>> {
-    const createdProduct = await this.dataSource.create(product);
+  ): Promise<Result<ProductResponseDto, Error>> {
+    const createdProductResult = await this.prismaDataSource.create(product);
+
+    if (createdProductResult.type === 'error') {
+      return createdProductResult;
+    }
+
+    const createdProduct = createdProductResult.value;
     const responseDto = this.mapper.toResponseDto(createdProduct);
 
     await this.cacheManager.del('all_products');
@@ -106,17 +123,28 @@ export class ProductRepository implements IProductRepository {
   async updateStock(
     id: number,
     stock: number,
-  ): Promise<
-    Result<ProductResponseDto, ProductNotFoundException | DatabaseException>
-  > {
-    const productExists = await this.dataSource.exists(id);
+  ): Promise<Result<ProductResponseDto, ProductNotFoundException | Error>> {
+    const productExistsResult = await this.prismaDataSource.exists(id);
 
-    if (!productExists) {
+    if (productExistsResult.type === 'error') {
+      return productExistsResult;
+    }
+
+    if (!productExistsResult.value) {
       const error = new ProductNotFoundException(id);
       return { type: 'error', throwable: error };
     }
 
-    const updatedProduct = await this.dataSource.updateStock(id, stock);
+    const updatedProductResult = await this.prismaDataSource.updateStock(
+      id,
+      stock,
+    );
+
+    if (updatedProductResult.type === 'error') {
+      return updatedProductResult;
+    }
+
+    const updatedProduct = updatedProductResult.value;
     const responseDto = this.mapper.toResponseDto(updatedProduct);
 
     await this.cacheManager.del(`product_${id}`);
@@ -127,15 +155,23 @@ export class ProductRepository implements IProductRepository {
 
   async deleteProduct(
     id: number,
-  ): Promise<Result<void, ProductNotFoundException | DatabaseException>> {
-    const productExists = await this.dataSource.exists(id);
+  ): Promise<Result<void, ProductNotFoundException | Error>> {
+    const productExistsResult = await this.prismaDataSource.exists(id);
 
-    if (!productExists) {
+    if (productExistsResult.type === 'error') {
+      return productExistsResult;
+    }
+
+    if (!productExistsResult.value) {
       const error = new ProductNotFoundException(id);
       return { type: 'error', throwable: error };
     }
 
-    await this.dataSource.delete(id);
+    const deleteResult = await this.prismaDataSource.delete(id);
+
+    if (deleteResult.type === 'error') {
+      return deleteResult;
+    }
 
     await this.cacheManager.del(`product_${id}`);
     await this.cacheManager.del('all_products');
