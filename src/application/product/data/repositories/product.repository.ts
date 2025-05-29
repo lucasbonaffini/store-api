@@ -6,6 +6,7 @@ import { IProductRepository } from '../../use-cases/interfaces/product-repositor
 import { IProductDataSource } from './interfaces/product-datasource.interface';
 import { FakeStoreDataSource } from '../../infrastructure/datasources/adapters/fakestore/fakestore.datasource';
 import { ProductResponseMapper } from '../mappers/product-response.mapper';
+import { PrismaToEntityMapper } from '../mappers/prisma-to-entity.mapper';
 import { ProductResponseDto } from '../../delivery/dtos/product.dto';
 import {
   ProductNotFoundException,
@@ -23,7 +24,9 @@ export class ProductRepository implements IProductRepository {
     @Inject(CACHE_MANAGER)
     private cacheManager: Cache,
     @Inject(ProductResponseMapper)
-    private readonly mapper: ProductResponseMapper,
+    private readonly responseMapper: ProductResponseMapper,
+    @Inject(PrismaToEntityMapper)
+    private readonly entityMapper: PrismaToEntityMapper,
   ) {}
 
   async getProducts(): Promise<
@@ -41,10 +44,12 @@ export class ProductRepository implements IProductRepository {
       return localProductsResult;
     }
 
-    const localProducts = localProductsResult.value;
+    const localPrismaData = localProductsResult.value;
 
-    if (localProducts.length > 0) {
-      const responseDto = this.mapper.toResponseDtoList(localProducts);
+    if (localPrismaData.length > 0) {
+      const localProducts =
+        this.entityMapper.toDomainEntityList(localPrismaData);
+      const responseDto = this.responseMapper.toResponseDtoList(localProducts);
       await this.cacheManager.set('all_products', responseDto, 3600);
       return { type: 'success', value: responseDto };
     }
@@ -54,7 +59,7 @@ export class ProductRepository implements IProductRepository {
       Product.fromFakeStore(product),
     );
 
-    const responseDto = this.mapper.toResponseDtoList(products);
+    const responseDto = this.responseMapper.toResponseDtoList(products);
     await this.cacheManager.set('all_products', responseDto, 3600);
     return { type: 'success', value: responseDto };
   }
@@ -81,10 +86,11 @@ export class ProductRepository implements IProductRepository {
       return localProductResult;
     }
 
-    const localProduct = localProductResult.value;
+    const localPrismaData = localProductResult.value;
 
-    if (localProduct) {
-      const responseDto = this.mapper.toResponseDto(localProduct);
+    if (localPrismaData) {
+      const localProduct = this.entityMapper.toDomainEntity(localPrismaData);
+      const responseDto = this.responseMapper.toResponseDto(localProduct);
       await this.cacheManager.set(cacheKey, responseDto, 3600);
       return { type: 'success', value: responseDto };
     }
@@ -97,7 +103,7 @@ export class ProductRepository implements IProductRepository {
     }
 
     const product = Product.fromFakeStore(fakeStoreProduct);
-    const responseDto = this.mapper.toResponseDto(product);
+    const responseDto = this.responseMapper.toResponseDto(product);
 
     await this.cacheManager.set(cacheKey, responseDto, 3600);
     return { type: 'success', value: responseDto };
@@ -106,14 +112,18 @@ export class ProductRepository implements IProductRepository {
   async createProduct(
     product: Product,
   ): Promise<Result<ProductResponseDto, Error>> {
-    const createdProductResult = await this.prismaDataSource.create(product);
+    const createPrismaDto =
+      this.entityMapper.fromDomainEntityToCreateDto(product);
+    const createdProductResult =
+      await this.prismaDataSource.create(createPrismaDto);
 
     if (createdProductResult.type === 'error') {
       return createdProductResult;
     }
 
-    const createdProduct = createdProductResult.value;
-    const responseDto = this.mapper.toResponseDto(createdProduct);
+    const createdPrismaData = createdProductResult.value;
+    const createdProduct = this.entityMapper.toDomainEntity(createdPrismaData);
+    const responseDto = this.responseMapper.toResponseDto(createdProduct);
 
     await this.cacheManager.del('all_products');
 
@@ -144,8 +154,9 @@ export class ProductRepository implements IProductRepository {
       return updatedProductResult;
     }
 
-    const updatedProduct = updatedProductResult.value;
-    const responseDto = this.mapper.toResponseDto(updatedProduct);
+    const updatedPrismaData = updatedProductResult.value;
+    const updatedProduct = this.entityMapper.toDomainEntity(updatedPrismaData);
+    const responseDto = this.responseMapper.toResponseDto(updatedProduct);
 
     await this.cacheManager.del(`product_${id}`);
     await this.cacheManager.del('all_products');
