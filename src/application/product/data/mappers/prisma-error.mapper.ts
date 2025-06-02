@@ -7,7 +7,6 @@ import { DatabaseException } from '../../domain/exceptions';
 @Injectable()
 export class PrismaErrorMapper {
   mapToDatabaseException(error: Error, operation: string): DatabaseException {
-    // Mapeo específico para errores de Prisma
     if (this.isPrismaError(error)) {
       return this.mapPrismaError(error, operation);
     }

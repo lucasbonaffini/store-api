@@ -5,7 +5,6 @@ import { ProductResponseMapper } from 'src/application/product/data/mappers/prod
 
 import { CreateProductUseCase } from 'src/application/product/use-cases/impl/create-product.use-case';
 import { DeleteProductUseCase } from 'src/application/product/use-cases/impl/delete-product.use-case';
-import { GetProductByIdUseCase } from 'src/application/product/use-cases/impl/get-product-by-id.use-case';
 import { GetProductsUseCase } from 'src/application/product/use-cases/impl/get-products.use-case';
 import { UpdateStockUseCase } from 'src/application/product/use-cases/impl/update-stock.use-case';
 
@@ -31,10 +30,6 @@ import { CacheModule } from './infrastructure/datasources/cache/cache.module';
     {
       provide: 'IDeleteProductUseCase',
       useClass: DeleteProductUseCase,
-    },
-    {
-      provide: 'IGetProductByIdUseCase',
-      useClass: GetProductByIdUseCase,
     },
     {
       provide: 'IGetProductsUseCase',
