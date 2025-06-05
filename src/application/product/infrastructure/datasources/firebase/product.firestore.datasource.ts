@@ -11,8 +11,6 @@ import {
   updateDoc,
   deleteDoc,
   query,
-  limit,
-  startAfter,
   orderBy,
   Timestamp,
 } from 'firebase/firestore';
@@ -35,18 +33,18 @@ export class FirebaseProductDataSource implements IProductDataSource {
   ): Promise<Result<PaginatedFirebaseResponse, Error>> {
     try {
       const productsCollection = collection(db, this.collectionName);
-      
+
       // Get all documents ordered by createdAt
       const allDocsQuery = query(
         productsCollection,
         orderBy('createdAt', 'desc'),
       );
       const allDocsSnapshot = await getDocs(allDocsQuery);
-      
+
       // Apply skip and limit manually
       const allDocs = allDocsSnapshot.docs;
       const paginatedDocs = allDocs.slice(skip, skip + pageSize);
-      
+
       const products: FirebaseProductDto[] = [];
 
       paginatedDocs.forEach((doc) => {
@@ -65,7 +63,8 @@ export class FirebaseProductDataSource implements IProductDataSource {
       });
 
       const hasNextPage = skip + pageSize < allDocs.length;
-      const currentPage = skip === 0 ? 'first' : `page_${Math.floor(skip / pageSize) + 1}`;
+      const currentPage =
+        skip === 0 ? 'first' : `page_${Math.floor(skip / pageSize) + 1}`;
 
       const response: PaginatedFirebaseResponse = {
         data: products,
