@@ -31,34 +31,25 @@ export class FirebaseProductDataSource implements IProductDataSource {
 
   async findAll(
     pageSize: number = 10,
-    startAfterDoc?: string,
+    skip: number = 0,
   ): Promise<Result<PaginatedFirebaseResponse, Error>> {
     try {
       const productsCollection = collection(db, this.collectionName);
-      let queryRef = query(
+      
+      // Get all documents ordered by createdAt
+      const allDocsQuery = query(
         productsCollection,
         orderBy('createdAt', 'desc'),
-        limit(pageSize),
       );
-
-      if (startAfterDoc) {
-        const startAfterSnapshot = await getDoc(
-          doc(db, this.collectionName, startAfterDoc),
-        );
-        if (startAfterSnapshot.exists()) {
-          queryRef = query(
-            productsCollection,
-            orderBy('createdAt', 'desc'),
-            startAfter(startAfterSnapshot),
-            limit(pageSize),
-          );
-        }
-      }
-
-      const querySnapshot = await getDocs(queryRef);
+      const allDocsSnapshot = await getDocs(allDocsQuery);
+      
+      // Apply skip and limit manually
+      const allDocs = allDocsSnapshot.docs;
+      const paginatedDocs = allDocs.slice(skip, skip + pageSize);
+      
       const products: FirebaseProductDto[] = [];
 
-      querySnapshot.forEach((doc) => {
+      paginatedDocs.forEach((doc) => {
         const data = doc.data();
         products.push({
           id: doc.id,
@@ -73,15 +64,15 @@ export class FirebaseProductDataSource implements IProductDataSource {
         });
       });
 
-      const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
-      const hasNextPage = querySnapshot.docs.length === pageSize;
+      const hasNextPage = skip + pageSize < allDocs.length;
+      const currentPage = skip === 0 ? 'first' : `page_${Math.floor(skip / pageSize) + 1}`;
 
       const response: PaginatedFirebaseResponse = {
         data: products,
         pagination: {
           hasNextPage,
-          nextCursor: hasNextPage ? lastDoc?.id : null,
-          currentPage: startAfterDoc ? 'next' : 'first',
+          nextCursor: hasNextPage ? `${skip + pageSize}` : null,
+          currentPage,
           totalInPage: products.length,
         },
       };

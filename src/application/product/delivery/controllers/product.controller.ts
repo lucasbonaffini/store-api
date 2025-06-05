@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   HttpCode,
   HttpStatus,
   ParseIntPipe,
@@ -19,6 +20,7 @@ import {
   ApiOperation,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { IProductService } from './interfaces/product.service.interface';
 import {
@@ -39,13 +41,18 @@ export class ProductController {
   @CacheKey('all_products')
   @CacheTTL(300)
   @ApiOperation({ summary: 'Get all products with stock' })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 10)' })
   @ApiResponse({
     status: 200,
     description: 'Returns all products with stock info',
     type: [ProductResponseDto],
   })
-  async findAll() {
-    return this.productService.getProducts();
+  async findAll(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ) {
+    return this.productService.getProducts({ page, limit });
   }
 
   @Get(':id')

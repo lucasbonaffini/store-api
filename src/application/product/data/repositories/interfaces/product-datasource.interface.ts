@@ -8,7 +8,7 @@ import {
 export interface IProductDataSource {
   findAll(
     pageSize?: number,
-    startAfterDoc?: string,
+    skip?: number,
   ): Promise<Result<PaginatedFirebaseResponse, Error>>;
   findById(id: string): Promise<Result<FirebaseProductDto | null, Error>>;
   create(

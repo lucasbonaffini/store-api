@@ -44,8 +44,9 @@ export class ProductRepository implements IProductRepository {
     >
   > {
     const limit = pagination?.limit || 10;
-    const cursor = pagination?.cursor;
-    const cacheKey = `products_${limit}_${cursor || 'first'}`;
+    const page = pagination?.page || 1;
+    const skip = (page - 1) * limit;
+    const cacheKey = `products_${limit}_${page}`;
 
     const cachedProducts =
       await this.cacheManager.get<PaginatedApiResponse<ProductResponseDto>>(
@@ -55,7 +56,7 @@ export class ProductRepository implements IProductRepository {
       return { type: 'success', value: cachedProducts };
     }
 
-    const firebaseResult = await this.firebaseDataSource.findAll(limit, cursor);
+    const firebaseResult = await this.firebaseDataSource.findAll(limit, skip);
 
     if (firebaseResult.type === 'error') {
       return {

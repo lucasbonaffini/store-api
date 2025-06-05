@@ -52,4 +52,5 @@ export interface PaginationQuery {
   limit?: number;
   cursor?: string;
   category?: string;
+  page?: number;
 }
