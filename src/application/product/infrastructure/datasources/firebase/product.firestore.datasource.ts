@@ -34,14 +34,12 @@ export class FirebaseProductDataSource implements IProductDataSource {
     try {
       const productsCollection = collection(db, this.collectionName);
 
-      // Get all documents ordered by createdAt
       const allDocsQuery = query(
         productsCollection,
         orderBy('createdAt', 'desc'),
       );
       const allDocsSnapshot = await getDocs(allDocsQuery);
 
-      // Apply skip and limit manually
       const allDocs = allDocsSnapshot.docs;
       const paginatedDocs = allDocs.slice(skip, skip + pageSize);
 
