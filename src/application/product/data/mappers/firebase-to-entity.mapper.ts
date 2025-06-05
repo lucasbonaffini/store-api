@@ -1,34 +1,34 @@
 import { Injectable } from '@nestjs/common';
 import { Product } from '../../domain/entities/product.entity';
 import {
-  PrismaProductDto,
-  CreatePrismaProductDto,
-} from '../../delivery/dtos/prisma-product.dto';
+  FirebaseProductDto,
+  CreateFirebaseProductDto,
+} from '../../delivery/dtos/firebase-product.dto';
 import { CreateProductDto } from '../../delivery/dtos/product.dto';
 
 @Injectable()
-export class PrismaToEntityMapper {
-  toDomainEntity(prismaData: PrismaProductDto): Product {
+export class FirebaseToEntityMapper {
+  toDomainEntity(firebaseData: FirebaseProductDto): Product {
     return new Product(
-      prismaData.id,
-      prismaData.title,
-      prismaData.price,
-      prismaData.description,
-      prismaData.category,
-      prismaData.image,
-      prismaData.stock,
-      prismaData.createdAt,
-      prismaData.updatedAt,
+      firebaseData.id,
+      firebaseData.title,
+      firebaseData.price,
+      firebaseData.description,
+      firebaseData.category,
+      firebaseData.image,
+      firebaseData.stock,
+      firebaseData.createdAt,
+      firebaseData.updatedAt,
     );
   }
 
-  toDomainEntityList(prismaDataList: PrismaProductDto[]): Product[] {
-    return prismaDataList.map((data) => this.toDomainEntity(data));
+  toDomainEntityList(firebaseDataList: FirebaseProductDto[]): Product[] {
+    return firebaseDataList.map((data) => this.toDomainEntity(data));
   }
 
-  toCreatePrismaDto(
+  toCreateFirebaseDto(
     createProductDto: CreateProductDto,
-  ): CreatePrismaProductDto {
+  ): CreateFirebaseProductDto {
     return {
       title: createProductDto.title,
       price: createProductDto.price,
@@ -39,7 +39,7 @@ export class PrismaToEntityMapper {
     };
   }
 
-  fromDomainEntityToCreateDto(product: Product): CreatePrismaProductDto {
+  fromDomainEntityToCreateDto(product: Product): CreateFirebaseProductDto {
     return {
       title: product.title,
       price: product.price,

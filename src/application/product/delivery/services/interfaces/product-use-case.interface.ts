@@ -3,21 +3,31 @@ import {
   UpdateStockDto,
   ProductResponseDto,
 } from '../../dtos/product.dto';
+import { PaginationQuery } from '../../dtos/firebase-product.dto';
 import {
   ProductNotFoundException,
   ExternalServiceException,
-} from '../../../domain/exceptions';
+} from '../../exceptions';
 import { Result } from '../../../../core/types/result';
+import {
+  PaginatedApiResponse,
+  ApiResponse,
+} from '../../dtos/firebase-product.dto';
 
 export interface IGetProductsUseCase {
-  execute(): Promise<
-    Result<ProductResponseDto[], ExternalServiceException | Error>
-  >;
-  executeById(
-    id: number,
+  execute(
+    pagination?: PaginationQuery,
   ): Promise<
     Result<
-      ProductResponseDto,
+      PaginatedApiResponse<ProductResponseDto>,
+      ExternalServiceException | Error
+    >
+  >;
+  executeById(
+    id: string,
+  ): Promise<
+    Result<
+      ApiResponse<ProductResponseDto>,
       ProductNotFoundException | ExternalServiceException | Error
     >
   >;
@@ -26,16 +36,20 @@ export interface IGetProductsUseCase {
 export interface ICreateProductUseCase {
   execute(
     createProductDto: CreateProductDto,
-  ): Promise<Result<ProductResponseDto, Error>>;
+  ): Promise<Result<ApiResponse<ProductResponseDto>, Error>>;
 }
 
 export interface IUpdateStockUseCase {
   execute(
-    id: number,
+    id: string,
     updateStockDto: UpdateStockDto,
-  ): Promise<Result<ProductResponseDto, ProductNotFoundException | Error>>;
+  ): Promise<
+    Result<ApiResponse<ProductResponseDto>, ProductNotFoundException | Error>
+  >;
 }
 
 export interface IDeleteProductUseCase {
-  execute(id: number): Promise<Result<void, ProductNotFoundException | Error>>;
+  execute(
+    id: string,
+  ): Promise<Result<ApiResponse<void>, ProductNotFoundException | Error>>;
 }

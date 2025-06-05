@@ -56,7 +56,7 @@ export class UpdateStockDto {
 
 export class ProductResponseDto {
   @ApiProperty()
-  id: number;
+  id: string;
 
   @ApiProperty()
   title: string;

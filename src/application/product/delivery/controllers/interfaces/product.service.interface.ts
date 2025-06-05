@@ -1,18 +1,32 @@
 import {
-  ProductResponseDto,
   CreateProductDto,
   UpdateStockDto,
-} from 'src/application/product/delivery/dtos/product.dto';
+  ProductResponseDto,
+} from '../../../delivery/dtos/product.dto';
+import { PaginationQuery } from '../../dtos/firebase-product.dto';
+import {
+  PaginatedApiResponse,
+  ApiResponse,
+} from '../../../delivery/dtos/firebase-product.dto';
+import { Result } from 'src/application/core/types/result';
 
-export abstract class IProductService {
-  abstract getProducts(): Promise<ProductResponseDto[]>;
-  abstract getProductById(id: number): Promise<ProductResponseDto>;
-  abstract createProduct(
+export interface IProductService {
+  getProducts(
+    pagination?: PaginationQuery,
+  ): Promise<Result<PaginatedApiResponse<ProductResponseDto>, Error>>;
+  getProductById(
+    id: string,
+  ): Promise<Result<ApiResponse<ProductResponseDto>, Error>>;
+  createProduct(
     createProductDto: CreateProductDto,
-  ): Promise<ProductResponseDto>;
-  abstract updateStock(
-    id: number,
+  ): Promise<Result<ApiResponse<ProductResponseDto>, Error>>;
+  updateStock(
+    id: string,
     updateStockDto: UpdateStockDto,
-  ): Promise<ProductResponseDto>;
-  abstract deleteProduct(id: number): Promise<void>;
+  ): Promise<Result<ApiResponse<ProductResponseDto>, Error>>;
+  deleteProduct(id: string): Promise<Result<ApiResponse<void>, Error>>;
+  getProductsByCategory?(
+    category: string,
+    pagination?: PaginationQuery,
+  ): Promise<Result<PaginatedApiResponse<ProductResponseDto>, Error>>;
 }

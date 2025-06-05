@@ -5,7 +5,7 @@ import {
   CreateProductDto,
   UpdateStockDto,
 } from '../../../../src/application/product/delivery/dtos/product.dto';
-import { ProductNotFoundException } from '../../../../src/application/product/domain/exceptions';
+import { ProductNotFoundException } from '../../../../src/application/product/delivery/exceptions';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { FakeStoreDataSource } from '../../../../src/application/product/infrastructure/datasources/adapters/fakestore/fakestore.datasource';
 

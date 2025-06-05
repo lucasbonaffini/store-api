@@ -1,7 +1,7 @@
 import { FakeStoreProduct } from 'src/application/product/infrastructure/datasources/adapters/fakestore/fakestore.types';
 
 export class Product {
-  private readonly _id: number;
+  private readonly _id: string; // Cambiado a string para Firebase
   private _title: string;
   private _price: number;
   private _description: string;
@@ -12,7 +12,7 @@ export class Product {
   private _updatedAt: Date;
 
   constructor(
-    id: number,
+    id: string,
     title: string,
     price: number,
     description: string,
@@ -34,35 +34,43 @@ export class Product {
   }
 
   // Getters
-  get id(): number {
+  get id(): string {
     return this._id;
   }
+
   get title(): string {
     return this._title;
   }
+
   get price(): number {
     return this._price;
   }
+
   get description(): string {
     return this._description;
   }
+
   get category(): string {
     return this._category;
   }
+
   get image(): string {
     return this._image;
   }
+
   get stock(): number {
     return this._stock;
   }
+
   get createdAt(): Date {
     return this._createdAt;
   }
+
   get updatedAt(): Date {
     return this._updatedAt;
   }
 
-  // Stetters and methods to modify the state of the object
+  // Métodos de negocio
   updateStock(newStock: number): void {
     if (newStock < 0) {
       throw new Error('Stock cannot be negative');
@@ -71,22 +79,32 @@ export class Product {
     this._updatedAt = new Date();
   }
 
-  updateDetails(
-    title?: string,
-    price?: number,
-    description?: string,
-    category?: string,
-    image?: string,
-  ): void {
-    if (title) this._title = title;
-    if (price) this._price = price;
-    if (description) this._description = description;
-    if (category) this._category = category;
-    if (image) this._image = image;
+  updateDetails(updates: {
+    title?: string;
+    price?: number;
+    description?: string;
+    category?: string;
+    image?: string;
+  }): void {
+    if (updates.title !== undefined) this._title = updates.title;
+    if (updates.price !== undefined) this._price = updates.price;
+    if (updates.description !== undefined)
+      this._description = updates.description;
+    if (updates.category !== undefined) this._category = updates.category;
+    if (updates.image !== undefined) this._image = updates.image;
     this._updatedAt = new Date();
   }
 
-  // Factory method to create a new product
+  // Métodos de validación
+  isInStock(): boolean {
+    return this._stock > 0;
+  }
+
+  isLowStock(threshold: number = 10): boolean {
+    return this._stock <= threshold && this._stock > 0;
+  }
+
+  // Factory method para crear un nuevo producto
   static create(
     title: string,
     price: number,
@@ -94,11 +112,11 @@ export class Product {
     category: string,
     image: string,
     stock: number = Math.floor(Math.random() * 100) + 1,
-    id?: number,
+    id?: string,
   ): Product {
     const now = new Date();
     return new Product(
-      id ?? 0,
+      id ?? '', // Firebase generará el ID
       title,
       price,
       description,
@@ -110,7 +128,7 @@ export class Product {
     );
   }
 
-  // Method to creat a product from FakeStore API
+  // Factory method para crear desde FakeStore API
   static fromFakeStore(
     fakeStoreProduct: FakeStoreProduct,
     stock: number = Math.floor(Math.random() * 100) + 1,
@@ -122,11 +140,11 @@ export class Product {
       fakeStoreProduct.category,
       fakeStoreProduct.image,
       stock,
-      fakeStoreProduct.id,
+      fakeStoreProduct.id?.toString(), // Convertir a string si viene como number
     );
   }
 
-  // Method to serealize the entity
+  // Método para serializar la entidad
   toJSON() {
     return {
       id: this._id,

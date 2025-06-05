@@ -6,7 +6,7 @@ import { FakeStoreProduct } from './fakestore.types';
 
 @Injectable()
 export class FakeStoreDataSource {
-  private readonly baseUrl = 'https://fakestoreapi.com';
+  private readonly baseUrl = process.env.FAKESTORE_API_URL;
 
   constructor(private readonly httpService: HttpService) {}
 

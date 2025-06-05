@@ -8,16 +8,31 @@ import { DeleteProductUseCase } from 'src/application/product/use-cases/impl/del
 import { GetProductsUseCase } from 'src/application/product/use-cases/impl/get-products.use-case';
 import { UpdateStockUseCase } from 'src/application/product/use-cases/impl/update-stock.use-case';
 
-import { PrismaProductDataSource } from './infrastructure/datasources/prisma/prisma-product.datasource';
-import { PrismaModule } from './infrastructure/datasources/prisma/prisma.module';
+import { ErrorMapperService } from 'src/application/product/data/mappers/error-maper.service';
+import { FirebaseErrorMapper } from 'src/application/product/data/mappers/firebase-error.mapper';
+import { FirebaseResponseMapper } from 'src/application/product/data/mappers/firebase-response.mapper';
+import { FirebaseToEntityMapper } from 'src/application/product/data/mappers/firebase-to-entity.mapper';
+
+import { ProductRepository } from 'src/application/product/data/repositories/product.repository';
+import { FirebaseProductDataSource } from 'src/application/product/infrastructure/datasources/firebase/product.firestore.datasource';
+
 import { FakeStoreModule } from './infrastructure/datasources/adapters/fakestore/fakestore.module';
 import { CacheModule } from './infrastructure/datasources/cache/cache.module';
 
 @Module({
-  imports: [PrismaModule, FakeStoreModule, CacheModule],
+  imports: [FakeStoreModule, CacheModule],
   controllers: [ProductController],
   providers: [
     ProductResponseMapper,
+    ErrorMapperService,
+    FirebaseErrorMapper,
+    FirebaseResponseMapper,
+    FirebaseToEntityMapper,
+    FirebaseProductDataSource,
+    {
+      provide: 'IProductRepository',
+      useClass: ProductRepository,
+    },
     {
       provide: 'IProductService',
       useClass: ProductService,
@@ -38,11 +53,6 @@ import { CacheModule } from './infrastructure/datasources/cache/cache.module';
     {
       provide: 'IUpdateStockUseCase',
       useClass: UpdateStockUseCase,
-    },
-
-    {
-      provide: 'ProductRepository',
-      useClass: PrismaProductDataSource,
     },
   ],
   exports: ['IProductService'],

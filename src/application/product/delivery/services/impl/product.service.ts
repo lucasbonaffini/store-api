@@ -4,6 +4,7 @@ import {
   CreateProductDto,
   UpdateStockDto,
 } from 'src/application/product/delivery/dtos/product.dto';
+import { PaginationQuery } from '../../../delivery/dtos/firebase-product.dto';
 import { IProductService } from '../../controllers/interfaces/product.service.interface';
 import {
   ICreateProductUseCase,
@@ -12,6 +13,11 @@ import {
   IDeleteProductUseCase,
 } from 'src/application/product/delivery/services/interfaces/product-use-case.interface';
 import { ErrorMapperService } from 'src/application/product/data/mappers/error-maper.service';
+import {
+  PaginatedApiResponse,
+  ApiResponse,
+} from '../../../delivery/dtos/firebase-product.dto';
+import { Result } from 'src/application/core/types/result';
 
 @Injectable()
 export class ProductService implements IProductService {
@@ -28,20 +34,38 @@ export class ProductService implements IProductService {
     private readonly errorMapper: ErrorMapperService,
   ) {}
 
-  async getProducts(): Promise<ProductResponseDto[]> {
-    const result = await this.getProductsUseCase.execute();
+  async getProducts(
+    pagination?: PaginationQuery,
+  ): Promise<Result<PaginatedApiResponse<ProductResponseDto>, Error>> {
+    const result = await this.getProductsUseCase.execute(pagination);
 
     if (result.type === 'error') {
       const mappedError = this.errorMapper.mapProductFetchError(
         result.throwable,
       );
-      throw mappedError;
+      const errorResponse: PaginatedApiResponse<ProductResponseDto> = {
+        data: {
+          items: [],
+          pagination: {
+            hasNextPage: false,
+            nextCursor: null,
+            currentPage: 'first',
+            totalInPage: 0,
+          },
+        },
+        error: {
+          message: mappedError.message,
+        },
+      };
+      return { type: 'success', value: errorResponse };
     }
 
-    return result.value;
+    return result;
   }
 
-  async getProductById(id: number): Promise<ProductResponseDto> {
+  async getProductById(
+    id: string,
+  ): Promise<Result<ApiResponse<ProductResponseDto>, Error>> {
     const result = await this.getProductsUseCase.executeById(id);
 
     if (result.type === 'error') {
@@ -49,31 +73,43 @@ export class ProductService implements IProductService {
         result.throwable,
         id,
       );
-      throw mappedError;
+      const errorResponse: ApiResponse<ProductResponseDto> = {
+        data: null,
+        error: {
+          message: mappedError.message,
+        },
+      };
+      return { type: 'success', value: errorResponse };
     }
 
-    return result.value;
+    return result;
   }
 
   async createProduct(
     createProductDto: CreateProductDto,
-  ): Promise<ProductResponseDto> {
+  ): Promise<Result<ApiResponse<ProductResponseDto>, Error>> {
     const result = await this.createProductUseCase.execute(createProductDto);
 
     if (result.type === 'error') {
       const mappedError = this.errorMapper.mapProductCreateError(
         result.throwable,
       );
-      throw mappedError;
+      const errorResponse: ApiResponse<ProductResponseDto> = {
+        data: null,
+        error: {
+          message: mappedError.message,
+        },
+      };
+      return { type: 'success', value: errorResponse };
     }
 
-    return result.value;
+    return result;
   }
 
   async updateStock(
-    id: number,
+    id: string,
     updateStockDto: UpdateStockDto,
-  ): Promise<ProductResponseDto> {
+  ): Promise<Result<ApiResponse<ProductResponseDto>, Error>> {
     const result = await this.updateStockUseCase.execute(id, updateStockDto);
 
     if (result.type === 'error') {
@@ -81,13 +117,19 @@ export class ProductService implements IProductService {
         result.throwable,
         id,
       );
-      throw mappedError;
+      const errorResponse: ApiResponse<ProductResponseDto> = {
+        data: null,
+        error: {
+          message: mappedError.message,
+        },
+      };
+      return { type: 'success', value: errorResponse };
     }
 
-    return result.value;
+    return result;
   }
 
-  async deleteProduct(id: number): Promise<void> {
+  async deleteProduct(id: string): Promise<Result<ApiResponse<void>, Error>> {
     const result = await this.deleteProductUseCase.execute(id);
 
     if (result.type === 'error') {
@@ -95,9 +137,15 @@ export class ProductService implements IProductService {
         result.throwable,
         id,
       );
-      throw mappedError;
+      const errorResponse: ApiResponse<void> = {
+        data: null,
+        error: {
+          message: mappedError.message,
+        },
+      };
+      return { type: 'success', value: errorResponse };
     }
 
-    return result.value;
+    return result;
   }
 }

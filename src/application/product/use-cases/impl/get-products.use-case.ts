@@ -4,9 +4,14 @@ import { IProductRepository } from '../interfaces/product-repository.interface';
 import {
   ExternalServiceException,
   ProductNotFoundException,
-} from '../../domain/exceptions';
+} from '../../delivery/exceptions';
 import { IGetProductsUseCase } from '../../delivery/services/interfaces/product-use-case.interface';
 import { Result } from 'src/application/core/types/result';
+import {
+  ApiResponse,
+  PaginatedApiResponse,
+} from '../../delivery/dtos/firebase-product.dto';
+import { PaginationQuery } from '../../delivery/dtos/firebase-product.dto';
 
 @Injectable()
 export class GetProductsUseCase implements IGetProductsUseCase {
@@ -15,16 +20,22 @@ export class GetProductsUseCase implements IGetProductsUseCase {
     private readonly productRepository: IProductRepository,
   ) {}
 
-  async execute(): Promise<
-    Result<ProductResponseDto[], ExternalServiceException | Error>
-  > {
-    return await this.productRepository.getProducts();
-  }
-  async executeById(
-    id: number,
+  async execute(
+    pagination?: PaginationQuery,
   ): Promise<
     Result<
-      ProductResponseDto,
+      PaginatedApiResponse<ProductResponseDto>,
+      ExternalServiceException | Error
+    >
+  > {
+    return await this.productRepository.getProducts(pagination);
+  }
+
+  async executeById(
+    id: string,
+  ): Promise<
+    Result<
+      ApiResponse<ProductResponseDto>,
       ProductNotFoundException | ExternalServiceException | Error
     >
   > {

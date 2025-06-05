@@ -59,7 +59,7 @@ export class ProductController {
     type: ProductResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Product not found' })
-  async findOne(@Param('id', ParseIntPipe) id: number) {
+  async findOne(@Param('id', ParseIntPipe) id: string) {
     return await this.productService.getProductById(id);
   }
 
@@ -87,7 +87,7 @@ export class ProductController {
   })
   @ApiResponse({ status: 404, description: 'Product not found' })
   async updateStock(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIntPipe) id: string,
     @Body() updateStockDto: UpdateStockDto,
   ) {
     return await this.productService.updateStock(id, updateStockDto);
@@ -99,7 +99,7 @@ export class ProductController {
   @ApiResponse({ status: 204, description: 'Product deleted successfully' })
   @ApiResponse({ status: 404, description: 'Product not found' })
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id', ParseIntPipe) id: number) {
+  async remove(@Param('id', ParseIntPipe) id: string) {
     await this.productService.deleteProduct(id);
   }
 }
