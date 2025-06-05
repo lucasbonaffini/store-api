@@ -7,6 +7,7 @@ import { CacheModule } from './application/product/infrastructure/datasources/ca
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: '.env',
     }),
     CacheModule,
     ProductModule,

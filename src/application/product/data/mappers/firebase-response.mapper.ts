@@ -27,8 +27,10 @@ export class FirebaseResponseMapper {
     return products.map((product) => this.toResponseDto(product));
   }
 
-  // Nuevos métodos para el formato de respuesta solicitado
-  toApiResponse<T>(data: T | null, error: string | null = null): ApiResponse<T> {
+  toApiResponse<T>(
+    data: T | null,
+    error: string | null = null,
+  ): ApiResponse<T> {
     return {
       data,
       error: {

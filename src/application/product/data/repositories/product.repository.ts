@@ -1,4 +1,3 @@
-// product.repository.ts (actualizado para Firebase)
 import { Injectable, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
@@ -56,10 +55,7 @@ export class ProductRepository implements IProductRepository {
       return { type: 'success', value: cachedProducts };
     }
 
-    const firebaseResult = await this.firebaseDataSource.findAll(
-      limit,
-      cursor,
-    );
+    const firebaseResult = await this.firebaseDataSource.findAll(limit, cursor);
 
     if (firebaseResult.type === 'error') {
       return {
@@ -71,9 +67,7 @@ export class ProductRepository implements IProductRepository {
     const firebaseData = firebaseResult.value;
 
     if (firebaseData.data.length > 0) {
-      const products = this.entityMapper.toDomainEntityList(
-        firebaseData.data,
-      );
+      const products = this.entityMapper.toDomainEntityList(firebaseData.data);
       const responseDtos = this.responseMapper.toResponseDtoList(products);
 
       const response = this.responseMapper.toPaginatedApiResponse(
@@ -144,17 +138,17 @@ export class ProductRepository implements IProductRepository {
       return { type: 'success', value: response };
     }
 
-    // Si no existe en Firebase, buscar en FakeStore
     const fakeStoreProduct = await this.fakeStoreDataSource.getProductById(
       parseInt(id),
     );
 
     if (!fakeStoreProduct) {
       const error = new ProductNotFoundException(id);
-      const errorResponse = this.responseMapper.toApiResponse<ProductResponseDto>(
-        null,
-        `Product with id ${id} not found`,
-      );
+      const errorResponse =
+        this.responseMapper.toApiResponse<ProductResponseDto>(
+          null,
+          error.message,
+        );
       return { type: 'success', value: errorResponse };
     }
 
@@ -189,7 +183,6 @@ export class ProductRepository implements IProductRepository {
     const responseDto = this.responseMapper.toResponseDto(createdProduct);
     const response = this.responseMapper.toApiResponse(responseDto);
 
-    // Limpiar cache
     await this.cacheManager.del('products_*');
 
     return { type: 'success', value: response };
@@ -201,7 +194,6 @@ export class ProductRepository implements IProductRepository {
   ): Promise<
     Result<ApiResponse<ProductResponseDto>, ProductNotFoundException | Error>
   > {
-    // Verificar si existe
     const existsResult = await this.firebaseDataSource.exists(id);
 
     if (existsResult.type === 'error') {
@@ -222,10 +214,7 @@ export class ProductRepository implements IProductRepository {
       return { type: 'success', value: errorResponse };
     }
 
-    const updatedResult = await this.firebaseDataSource.updateStock(
-      id,
-      stock,
-    );
+    const updatedResult = await this.firebaseDataSource.updateStock(id, stock);
 
     if (updatedResult.type === 'error') {
       const errorResponse =
@@ -242,7 +231,6 @@ export class ProductRepository implements IProductRepository {
     const responseDto = this.responseMapper.toResponseDto(updatedProduct);
     const response = this.responseMapper.toApiResponse(responseDto);
 
-    // Limpiar cache
     await this.cacheManager.del(`product_${id}`);
     await this.cacheManager.del('products_*');
 
@@ -252,7 +240,6 @@ export class ProductRepository implements IProductRepository {
   async deleteProduct(
     id: string,
   ): Promise<Result<ApiResponse<void>, ProductNotFoundException | Error>> {
-    // Verificar si existe
     const existsResult = await this.firebaseDataSource.exists(id);
 
     if (existsResult.type === 'error') {
@@ -283,7 +270,6 @@ export class ProductRepository implements IProductRepository {
 
     const response = this.responseMapper.toApiResponse<void>(undefined);
 
-    // Limpiar cache
     await this.cacheManager.del(`product_${id}`);
     await this.cacheManager.del('products_*');
 

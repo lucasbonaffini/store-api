@@ -14,6 +14,7 @@ import {
   limit,
   startAfter,
   orderBy,
+  Timestamp,
 } from 'firebase/firestore';
 import { db } from './config.firebase';
 import { IProductDataSource } from '../../../data/repositories/interfaces/product-datasource.interface';
@@ -125,23 +126,34 @@ export class FirebaseProductDataSource implements IProductDataSource {
     productData: CreateFirebaseProductDto,
   ): Promise<Result<FirebaseProductDto, Error>> {
     try {
-      const now = new Date();
-      const dataToSave = {
-        ...productData,
+      const now = Timestamp.now();
+
+      const sanitizedData = {
+        title: String(productData.title || ''),
+        price: Number(productData.price) || 0,
+        description: String(productData.description || ''),
+        category: String(productData.category || ''),
+        image: String(productData.image || ''),
+        stock: Number(productData.stock) || 0,
         createdAt: now,
         updatedAt: now,
       };
 
       const docRef = await addDoc(
         collection(db, this.collectionName),
-        dataToSave,
+        sanitizedData,
       );
 
       const createdProduct: FirebaseProductDto = {
         id: docRef.id,
-        ...productData,
-        createdAt: now,
-        updatedAt: now,
+        title: sanitizedData.title,
+        price: sanitizedData.price,
+        description: sanitizedData.description,
+        category: sanitizedData.category,
+        image: sanitizedData.image,
+        stock: sanitizedData.stock,
+        createdAt: now.toDate(),
+        updatedAt: now.toDate(),
       };
 
       return { type: 'success', value: createdProduct };
@@ -164,12 +176,11 @@ export class FirebaseProductDataSource implements IProductDataSource {
 
       const updateData = {
         ...productData,
-        updatedAt: new Date(),
+        updatedAt: Timestamp.now(),
       };
 
       await updateDoc(docRef, updateData);
 
-      // Obtener el documento actualizado
       const updatedDocSnap = await getDoc(docRef);
       const updatedData = updatedDocSnap.data()!;
 
@@ -205,7 +216,7 @@ export class FirebaseProductDataSource implements IProductDataSource {
 
       await updateDoc(docRef, {
         stock,
-        updatedAt: new Date(),
+        updatedAt: Timestamp.now(),
       });
 
       const updatedDocSnap = await getDoc(docRef);

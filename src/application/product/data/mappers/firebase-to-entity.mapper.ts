@@ -35,7 +35,7 @@ export class FirebaseToEntityMapper {
       description: createProductDto.description,
       category: createProductDto.category,
       image: createProductDto.image,
-      stock: createProductDto.stock || 0,
+      stock: createProductDto.stock ?? 0,
     };
   }
 
