@@ -13,9 +13,11 @@ import {
   IDeleteProductUseCase,
 } from 'src/application/product/delivery/services/interfaces/product-use-case.interface';
 import { ErrorMapperService } from 'src/application/product/data/mappers/error-maper.service';
+import { ProductResponseMapper } from 'src/application/product/data/mappers/product-response.mapper';
 import {
   PaginatedApiResponse,
   ApiResponse,
+  PaginationMeta,
 } from '../../../delivery/dtos/firebase-product.dto';
 import { Result } from 'src/application/core/types/result';
 
@@ -32,6 +34,8 @@ export class ProductService implements IProductService {
     private readonly deleteProductUseCase: IDeleteProductUseCase,
     @Inject(ErrorMapperService)
     private readonly errorMapper: ErrorMapperService,
+    @Inject(ProductResponseMapper)
+    private readonly responseMapper: ProductResponseMapper,
   ) {}
 
   async getProducts(
@@ -43,24 +47,27 @@ export class ProductService implements IProductService {
       const mappedError = this.errorMapper.mapProductFetchError(
         result.throwable,
       );
-      const errorResponse: PaginatedApiResponse<ProductResponseDto> = {
-        data: {
-          items: [],
-          pagination: {
-            hasNextPage: false,
-            nextCursor: null,
-            currentPage: 'first',
-            totalInPage: 0,
-          },
-        },
-        error: {
-          message: mappedError.message,
-        },
-      };
-      return { type: 'success', value: errorResponse };
+      return { type: 'error', throwable: mappedError };
     }
 
-    return result;
+    const productsData = result.value;
+    const responseDtos = this.responseMapper.toResponseDtoList(
+      productsData.data,
+    );
+
+    const paginationMeta: PaginationMeta = {
+      ...productsData.pagination,
+      currentPage: productsData.pagination.nextCursor
+        ? `cursor_${productsData.pagination.nextCursor}`
+        : 'first',
+    };
+
+    const response = this.responseMapper.toPaginatedApiResponse(
+      responseDtos,
+      paginationMeta,
+    );
+
+    return { type: 'success', value: response };
   }
 
   async getProductById(
@@ -73,16 +80,20 @@ export class ProductService implements IProductService {
         result.throwable,
         id,
       );
-      const errorResponse: ApiResponse<ProductResponseDto> = {
-        data: null,
-        error: {
-          message: mappedError.message,
-        },
-      };
-      return { type: 'success', value: errorResponse };
+      return { type: 'error', throwable: mappedError };
     }
 
-    return result;
+    const product = result.value;
+
+    if (!product) {
+      const notFoundError = new Error(`Product with id ${id} not found`);
+      return { type: 'error', throwable: notFoundError };
+    }
+
+    const responseDto = this.responseMapper.toResponseDto(product);
+    const response = this.responseMapper.toApiResponse(responseDto);
+
+    return { type: 'success', value: response };
   }
 
   async createProduct(
@@ -94,16 +105,14 @@ export class ProductService implements IProductService {
       const mappedError = this.errorMapper.mapProductCreateError(
         result.throwable,
       );
-      const errorResponse: ApiResponse<ProductResponseDto> = {
-        data: null,
-        error: {
-          message: mappedError.message,
-        },
-      };
-      return { type: 'success', value: errorResponse };
+      return { type: 'error', throwable: mappedError };
     }
 
-    return result;
+    const product = result.value;
+    const responseDto = this.responseMapper.toResponseDto(product);
+    const response = this.responseMapper.toApiResponse(responseDto);
+
+    return { type: 'success', value: response };
   }
 
   async updateStock(
@@ -117,16 +126,14 @@ export class ProductService implements IProductService {
         result.throwable,
         id,
       );
-      const errorResponse: ApiResponse<ProductResponseDto> = {
-        data: null,
-        error: {
-          message: mappedError.message,
-        },
-      };
-      return { type: 'success', value: errorResponse };
+      return { type: 'error', throwable: mappedError };
     }
 
-    return result;
+    const product = result.value;
+    const responseDto = this.responseMapper.toResponseDto(product);
+    const response = this.responseMapper.toApiResponse(responseDto);
+
+    return { type: 'success', value: response };
   }
 
   async deleteProduct(id: string): Promise<Result<ApiResponse<void>, Error>> {
@@ -137,15 +144,10 @@ export class ProductService implements IProductService {
         result.throwable,
         id,
       );
-      const errorResponse: ApiResponse<void> = {
-        data: null,
-        error: {
-          message: mappedError.message,
-        },
-      };
-      return { type: 'success', value: errorResponse };
+      return { type: 'error', throwable: mappedError };
     }
 
-    return result;
+    const response = this.responseMapper.toApiResponse<void>(undefined);
+    return { type: 'success', value: response };
   }
 }

@@ -12,16 +12,19 @@ import {
   deleteDoc,
   query,
   orderBy,
+  limit,
+  startAfter,
+  increment,
   Timestamp,
 } from 'firebase/firestore';
 import { db } from './config.firebase';
 import { IProductDataSource } from '../../../data/repositories/interfaces/product-datasource.interface';
 import { Result } from '../../../../core/types/result';
 import {
-  FirebaseProductDto,
-  CreateFirebaseProductDto,
+  FirebaseProductEntity,
+  CreateFirebaseProductEntity,
   PaginatedFirebaseResponse,
-} from '../../../delivery/dtos/firebase-product.dto';
+} from '../../entities/firebase-product.entity';
 
 @Injectable()
 export class FirebaseProductDataSource implements IProductDataSource {
@@ -29,25 +32,44 @@ export class FirebaseProductDataSource implements IProductDataSource {
 
   async findAll(
     pageSize: number = 10,
-    skip: number = 0,
+    cursor?: string,
   ): Promise<Result<PaginatedFirebaseResponse, Error>> {
     try {
       const productsCollection = collection(db, this.collectionName);
 
-      const allDocsQuery = query(
+      let queryRef = query(
         productsCollection,
         orderBy('createdAt', 'desc'),
+        limit(pageSize + 1),
       );
-      const allDocsSnapshot = await getDocs(allDocsQuery);
 
-      const allDocs = allDocsSnapshot.docs;
-      const paginatedDocs = allDocs.slice(skip, skip + pageSize);
+      if (cursor) {
+        try {
+          const lastDocRef = doc(db, this.collectionName, cursor);
+          const lastDocSnapshot = await getDoc(lastDocRef);
 
-      const products: FirebaseProductDto[] = [];
+          if (lastDocSnapshot.exists()) {
+            queryRef = query(
+              productsCollection,
+              orderBy('createdAt', 'desc'),
+              startAfter(lastDocSnapshot),
+              limit(pageSize + 1),
+            );
+          }
+        } catch (cursorError) {
+          console.warn('Invalid cursor, starting from beginning:', cursorError);
+        }
+      }
 
-      paginatedDocs.forEach((doc) => {
+      const querySnapshot = await getDocs(queryRef);
+      const docs = querySnapshot.docs;
+
+      const hasNextPage = docs.length > pageSize;
+      const dataToReturn = hasNextPage ? docs.slice(0, pageSize) : docs;
+
+      const products: FirebaseProductEntity[] = dataToReturn.map((doc) => {
         const data = doc.data();
-        products.push({
+        return {
           id: doc.id,
           title: data.title,
           price: data.price,
@@ -57,19 +79,19 @@ export class FirebaseProductDataSource implements IProductDataSource {
           stock: data.stock,
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
-        });
+        };
       });
 
-      const hasNextPage = skip + pageSize < allDocs.length;
-      const currentPage =
-        skip === 0 ? 'first' : `page_${Math.floor(skip / pageSize) + 1}`;
+      const nextCursor =
+        hasNextPage && dataToReturn.length > 0
+          ? dataToReturn[dataToReturn.length - 1].id
+          : null;
 
       const response: PaginatedFirebaseResponse = {
         data: products,
         pagination: {
           hasNextPage,
-          nextCursor: hasNextPage ? `${skip + pageSize}` : null,
-          currentPage,
+          nextCursor,
           totalInPage: products.length,
         },
       };
@@ -82,7 +104,7 @@ export class FirebaseProductDataSource implements IProductDataSource {
 
   async findById(
     id: string,
-  ): Promise<Result<FirebaseProductDto | null, Error>> {
+  ): Promise<Result<FirebaseProductEntity | null, Error>> {
     try {
       const docRef = doc(db, this.collectionName, id);
       const docSnap = await getDoc(docRef);
@@ -92,7 +114,7 @@ export class FirebaseProductDataSource implements IProductDataSource {
       }
 
       const data = docSnap.data();
-      const product: FirebaseProductDto = {
+      const product: FirebaseProductEntity = {
         id: docSnap.id,
         title: data.title,
         price: data.price,
@@ -111,35 +133,25 @@ export class FirebaseProductDataSource implements IProductDataSource {
   }
 
   async create(
-    productData: CreateFirebaseProductDto,
-  ): Promise<Result<FirebaseProductDto, Error>> {
+    productData: CreateFirebaseProductEntity,
+  ): Promise<Result<FirebaseProductEntity, Error>> {
     try {
       const now = Timestamp.now();
 
-      const sanitizedData = {
-        title: String(productData.title || ''),
-        price: Number(productData.price) || 0,
-        description: String(productData.description || ''),
-        category: String(productData.category || ''),
-        image: String(productData.image || ''),
-        stock: Number(productData.stock) || 0,
+      const dataToStore = {
+        ...productData,
         createdAt: now,
         updatedAt: now,
       };
 
       const docRef = await addDoc(
         collection(db, this.collectionName),
-        sanitizedData,
+        dataToStore,
       );
 
-      const createdProduct: FirebaseProductDto = {
+      const createdProduct: FirebaseProductEntity = {
         id: docRef.id,
-        title: sanitizedData.title,
-        price: sanitizedData.price,
-        description: sanitizedData.description,
-        category: sanitizedData.category,
-        image: sanitizedData.image,
-        stock: sanitizedData.stock,
+        ...productData,
         createdAt: now.toDate(),
         updatedAt: now.toDate(),
       };
@@ -152,8 +164,8 @@ export class FirebaseProductDataSource implements IProductDataSource {
 
   async update(
     id: string,
-    productData: Partial<CreateFirebaseProductDto>,
-  ): Promise<Result<FirebaseProductDto, Error>> {
+    productData: Partial<CreateFirebaseProductEntity>,
+  ): Promise<Result<FirebaseProductEntity, Error>> {
     try {
       const docRef = doc(db, this.collectionName, id);
       const docSnap = await getDoc(docRef);
@@ -172,7 +184,7 @@ export class FirebaseProductDataSource implements IProductDataSource {
       const updatedDocSnap = await getDoc(docRef);
       const updatedData = updatedDocSnap.data()!;
 
-      const updatedProduct: FirebaseProductDto = {
+      const updatedProduct: FirebaseProductEntity = {
         id: updatedDocSnap.id,
         title: updatedData.title,
         price: updatedData.price,
@@ -193,7 +205,7 @@ export class FirebaseProductDataSource implements IProductDataSource {
   async updateStock(
     id: string,
     stock: number,
-  ): Promise<Result<FirebaseProductDto, Error>> {
+  ): Promise<Result<FirebaseProductEntity, Error>> {
     try {
       const docRef = doc(db, this.collectionName, id);
       const docSnap = await getDoc(docRef);
@@ -202,15 +214,19 @@ export class FirebaseProductDataSource implements IProductDataSource {
         throw new Error(`Product with id ${id} not found`);
       }
 
+      const currentData = docSnap.data();
+      const currentStock = currentData.stock || 0;
+      const stockDifference = stock - currentStock;
+
       await updateDoc(docRef, {
-        stock,
+        stock: increment(stockDifference),
         updatedAt: Timestamp.now(),
       });
 
       const updatedDocSnap = await getDoc(docRef);
       const updatedData = updatedDocSnap.data()!;
 
-      const updatedProduct: FirebaseProductDto = {
+      const updatedProduct: FirebaseProductEntity = {
         id: updatedDocSnap.id,
         title: updatedData.title,
         price: updatedData.price,

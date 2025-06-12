@@ -42,10 +42,10 @@ export class ProductController {
   @CacheTTL(300)
   @ApiOperation({ summary: 'Get all products with stock' })
   @ApiQuery({
-    name: 'page',
+    name: 'cursor',
     required: false,
-    type: Number,
-    description: 'Page number (default: 1)',
+    type: String,
+    description: 'Cursor for pagination (product ID to start after)',
   })
   @ApiQuery({
     name: 'limit',
@@ -59,10 +59,10 @@ export class ProductController {
     type: [ProductResponseDto],
   })
   async findAll(
-    @Query('page') page: number = 1,
+    @Query('cursor') cursor?: string,
     @Query('limit') limit: number = 10,
   ) {
-    return this.productService.getProducts({ page, limit });
+    return await this.productService.getProducts({ cursor, limit });
   }
 
   @Get(':id')
@@ -117,6 +117,6 @@ export class ProductController {
   @ApiResponse({ status: 404, description: 'Product not found' })
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id', ParseIntPipe) id: string) {
-    await this.productService.deleteProduct(id);
+    return await this.productService.deleteProduct(id);
   }
 }

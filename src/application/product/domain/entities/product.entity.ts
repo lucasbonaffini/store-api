@@ -1,7 +1,5 @@
-import { FakeStoreProduct } from 'src/application/product/infrastructure/datasources/adapters/fakestore/fakestore.types';
-
 export class Product {
-  private readonly _id: string; // Cambiado a string para Firebase
+  private readonly _id: string;
   private _title: string;
   private _price: number;
   private _description: string;
@@ -33,7 +31,6 @@ export class Product {
     this._updatedAt = updatedAt;
   }
 
-  // Getters
   get id(): string {
     return this._id;
   }
@@ -70,41 +67,6 @@ export class Product {
     return this._updatedAt;
   }
 
-  // Métodos de negocio
-  updateStock(newStock: number): void {
-    if (newStock < 0) {
-      throw new Error('Stock cannot be negative');
-    }
-    this._stock = newStock;
-    this._updatedAt = new Date();
-  }
-
-  updateDetails(updates: {
-    title?: string;
-    price?: number;
-    description?: string;
-    category?: string;
-    image?: string;
-  }): void {
-    if (updates.title !== undefined) this._title = updates.title;
-    if (updates.price !== undefined) this._price = updates.price;
-    if (updates.description !== undefined)
-      this._description = updates.description;
-    if (updates.category !== undefined) this._category = updates.category;
-    if (updates.image !== undefined) this._image = updates.image;
-    this._updatedAt = new Date();
-  }
-
-  // Métodos de validación
-  isInStock(): boolean {
-    return this._stock > 0;
-  }
-
-  isLowStock(threshold: number = 10): boolean {
-    return this._stock <= threshold && this._stock > 0;
-  }
-
-  // Factory method para crear un nuevo producto
   static create(
     title: string,
     price: number,
@@ -116,7 +78,7 @@ export class Product {
   ): Product {
     const now = new Date();
     return new Product(
-      id ?? '', // Firebase generará el ID
+      id ?? '',
       title,
       price,
       description,
@@ -126,36 +88,5 @@ export class Product {
       now,
       now,
     );
-  }
-
-  // Factory method para crear desde FakeStore API
-  static fromFakeStore(
-    fakeStoreProduct: FakeStoreProduct,
-    stock: number = Math.floor(Math.random() * 100) + 1,
-  ): Product {
-    return Product.create(
-      fakeStoreProduct.title,
-      fakeStoreProduct.price,
-      fakeStoreProduct.description,
-      fakeStoreProduct.category,
-      fakeStoreProduct.image,
-      stock,
-      fakeStoreProduct.id?.toString(), // Convertir a string si viene como number
-    );
-  }
-
-  // Método para serializar la entidad
-  toJSON() {
-    return {
-      id: this._id,
-      title: this._title,
-      price: this._price,
-      description: this._description,
-      category: this._category,
-      image: this._image,
-      stock: this._stock,
-      createdAt: this._createdAt,
-      updatedAt: this._updatedAt,
-    };
   }
 }

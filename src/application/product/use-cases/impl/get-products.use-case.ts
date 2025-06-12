@@ -1,5 +1,4 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { ProductResponseDto } from '../../delivery/dtos/product.dto';
 import { IProductRepository } from '../interfaces/product-repository.interface';
 import {
   ExternalServiceException,
@@ -7,10 +6,8 @@ import {
 } from '../../delivery/exceptions';
 import { IGetProductsUseCase } from '../../delivery/services/interfaces/product-use-case.interface';
 import { Result } from 'src/application/core/types/result';
-import {
-  ApiResponse,
-  PaginatedApiResponse,
-} from '../../delivery/dtos/firebase-product.dto';
+import { Product } from '../../domain/entities/product.entity';
+import { PaginatedResponse } from '../../domain/entities/pagination.entity';
 import { PaginationQuery } from '../../delivery/dtos/firebase-product.dto';
 
 @Injectable()
@@ -23,10 +20,7 @@ export class GetProductsUseCase implements IGetProductsUseCase {
   async execute(
     pagination?: PaginationQuery,
   ): Promise<
-    Result<
-      PaginatedApiResponse<ProductResponseDto>,
-      ExternalServiceException | Error
-    >
+    Result<PaginatedResponse<Product>, ExternalServiceException | Error>
   > {
     return await this.productRepository.getProducts(pagination);
   }
@@ -35,7 +29,7 @@ export class GetProductsUseCase implements IGetProductsUseCase {
     id: string,
   ): Promise<
     Result<
-      ApiResponse<ProductResponseDto>,
+      Product | null,
       ProductNotFoundException | ExternalServiceException | Error
     >
   > {

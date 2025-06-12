@@ -1,14 +1,10 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Product } from '../../domain/entities/product.entity';
 import { IProductRepository } from '../interfaces/product-repository.interface';
-import {
-  CreateProductDto,
-  ProductResponseDto,
-} from '../../delivery/dtos/product.dto';
+import { CreateProductDto } from '../../delivery/dtos/product.dto';
 import { ICreateProductUseCase } from '../../delivery/services/interfaces/product-use-case.interface';
 import { InvalidProductDataException } from '../../delivery/exceptions';
 import { Result } from 'src/application/core/types/result';
-import { ApiResponse } from '../../delivery/dtos/firebase-product.dto';
 
 @Injectable()
 export class CreateProductUseCase implements ICreateProductUseCase {
@@ -19,9 +15,7 @@ export class CreateProductUseCase implements ICreateProductUseCase {
 
   async execute(
     createProductDto: CreateProductDto,
-  ): Promise<
-    Result<ApiResponse<ProductResponseDto>, InvalidProductDataException | Error>
-  > {
+  ): Promise<Result<Product, InvalidProductDataException | Error>> {
     const stock = createProductDto.stock || Math.floor(Math.random() * 100) + 1;
 
     const product = Product.create(

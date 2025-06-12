@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { Product } from '../../domain/entities/product.entity';
-import {
-  FirebaseProductDto,
-  CreateFirebaseProductDto,
-} from '../../delivery/dtos/firebase-product.dto';
 import { CreateProductDto } from '../../delivery/dtos/product.dto';
+import {
+  FirebaseProductEntity,
+  CreateFirebaseProductEntity,
+} from '../../infrastructure/entities/firebase-product.entity';
 
 @Injectable()
 export class FirebaseToEntityMapper {
-  toDomainEntity(firebaseData: FirebaseProductDto): Product {
+  toDomainEntity(firebaseData: FirebaseProductEntity): Product {
     return new Product(
       firebaseData.id,
       firebaseData.title,
@@ -22,13 +22,13 @@ export class FirebaseToEntityMapper {
     );
   }
 
-  toDomainEntityList(firebaseDataList: FirebaseProductDto[]): Product[] {
+  toDomainEntityList(firebaseDataList: FirebaseProductEntity[]): Product[] {
     return firebaseDataList.map((data) => this.toDomainEntity(data));
   }
 
-  toCreateFirebaseDto(
+  toCreateFirebaseEntity(
     createProductDto: CreateProductDto,
-  ): CreateFirebaseProductDto {
+  ): CreateFirebaseProductEntity {
     return {
       title: createProductDto.title,
       price: createProductDto.price,
@@ -39,7 +39,9 @@ export class FirebaseToEntityMapper {
     };
   }
 
-  fromDomainEntityToCreateDto(product: Product): CreateFirebaseProductDto {
+  fromDomainEntityToCreateEntity(
+    product: Product,
+  ): CreateFirebaseProductEntity {
     return {
       title: product.title,
       price: product.price,

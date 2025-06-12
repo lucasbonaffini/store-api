@@ -1,27 +1,27 @@
 import { Result } from 'src/application/core/types/result';
 import {
-  FirebaseProductDto,
-  CreateFirebaseProductDto,
+  FirebaseProductEntity,
+  CreateFirebaseProductEntity,
   PaginatedFirebaseResponse,
-} from '../../../delivery/dtos/firebase-product.dto';
+} from '../../../infrastructure/entities/firebase-product.entity';
 
 export interface IProductDataSource {
   findAll(
     pageSize?: number,
-    skip?: number,
+    cursor?: string,
   ): Promise<Result<PaginatedFirebaseResponse, Error>>;
-  findById(id: string): Promise<Result<FirebaseProductDto | null, Error>>;
+  findById(id: string): Promise<Result<FirebaseProductEntity | null, Error>>;
   create(
-    productData: CreateFirebaseProductDto,
-  ): Promise<Result<FirebaseProductDto, Error>>;
+    productData: CreateFirebaseProductEntity,
+  ): Promise<Result<FirebaseProductEntity, Error>>;
   update(
     id: string,
-    productData: Partial<CreateFirebaseProductDto>,
-  ): Promise<Result<FirebaseProductDto, Error>>;
+    productData: Partial<CreateFirebaseProductEntity>,
+  ): Promise<Result<FirebaseProductEntity, Error>>;
   updateStock(
     id: string,
     stock: number,
-  ): Promise<Result<FirebaseProductDto, Error>>;
+  ): Promise<Result<FirebaseProductEntity, Error>>;
   delete(id: string): Promise<Result<void, Error>>;
   exists(id: string): Promise<Result<boolean, Error>>;
 }

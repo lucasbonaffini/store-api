@@ -12,6 +12,7 @@ import { ErrorMapperService } from 'src/application/product/data/mappers/error-m
 import { FirebaseErrorMapper } from 'src/application/product/data/mappers/firebase-error.mapper';
 import { FirebaseResponseMapper } from 'src/application/product/data/mappers/firebase-response.mapper';
 import { FirebaseToEntityMapper } from 'src/application/product/data/mappers/firebase-to-entity.mapper';
+import { FakeStoreToEntityMapper } from 'src/application/product/infrastructure/mappers/fakestore-to-entity.mapper';
 
 import { ProductRepository } from 'src/application/product/data/repositories/product.repository';
 import { FirebaseProductDataSource } from 'src/application/product/infrastructure/datasources/firebase/product.firestore.datasource';
@@ -28,6 +29,7 @@ import { CacheModule } from './infrastructure/datasources/cache/cache.module';
     FirebaseErrorMapper,
     FirebaseResponseMapper,
     FirebaseToEntityMapper,
+    FakeStoreToEntityMapper,
     FirebaseProductDataSource,
     {
       provide: 'IProductRepository',
