@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { AuthDataSource } from '../../infrastructure/datasource/auth.datasource';
 import { IUserRepository } from '../../use-cases/interfaces/user.repository.interface';
 import { User } from '../../domain/entities/user.entity';
@@ -28,18 +27,25 @@ export class UserRepository implements IUserRepository {
     }
     return { type: 'success', value: result.value };
   }
-  async createUser(user: User): Promise<Result<User, Error>> {
-    const result = await this.authDataSource.create(user);
-    if (result.type === 'error') {
-      return { type: 'error', throwable: result.throwable };
-    }
-    return { type: 'success', value: result.value };
+  async deleteUser(uid: string): Promise<Result<void, Error>> {
+    return await this.authDataSource.delete(uid);
   }
-  async deleteUser(id: string): Promise<Result<void, Error>> {
-    const result = await this.authDataSource.delete(id);
-    if (result.type === 'error') {
-      return { type: 'error', throwable: result.throwable };
-    }
-    return { type: 'success', value: undefined };
+
+  async registerUser(
+    email: string,
+    password: string,
+  ): Promise<Result<User, Error>> {
+    return await this.authDataSource.register(email, password);
+  }
+
+  async loginUser(
+    email: string,
+    password: string,
+  ): Promise<Result<User, Error>> {
+    return await this.authDataSource.login(email, password);
+  }
+
+  async logoutUser(): Promise<Result<void, Error>> {
+    return await this.authDataSource.logout();
   }
 }

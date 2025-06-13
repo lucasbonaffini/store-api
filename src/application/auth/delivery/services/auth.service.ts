@@ -76,7 +76,23 @@ export class AuthService implements IAuthService {
   async findUserByEmail(
     email: string,
   ): Promise<Result<UserResponseDto | null, Error>> {
-    return this.findUserByEmailUseCase.execute(email);
+    const result = await this.findUserByEmailUseCase.execute(email);
+    if (result.type === 'error') {
+      return result;
+    }
+
+    if (result.value === null) {
+      return { type: 'success', value: null };
+    }
+
+    const userResponseDto: UserResponseDto = {
+      uid: result.value.id,
+      email: result.value.email,
+      createdAt: result.value.createdAt,
+      updatedAt: result.value.updatedAt,
+    };
+
+    return { type: 'success', value: userResponseDto };
   }
 
   async deleteUser(email: string): Promise<Result<void, Error>> {

@@ -2,7 +2,16 @@
 import { Injectable } from '@nestjs/common';
 import { Result } from 'src/application/core/types/result';
 import { User } from '../../domain/entities/user.entity';
-import { adminAuth } from 'src/application/product/infrastructure/datasources/firebase/config.firebase';
+import {
+  adminAuth,
+  auth,
+} from 'src/application/product/infrastructure/datasources/firebase/config.firebase';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  UserCredential,
+} from 'firebase/auth';
 @Injectable()
 export class AuthDataSource {
   async findAll(): Promise<Result<User[], Error>> {
@@ -68,6 +77,59 @@ export class AuthDataSource {
       if (error.code === 'auth/user-not-found') {
         return { type: 'success', value: false };
       }
+      return { type: 'error', throwable: error as Error };
+    }
+  }
+
+  async register(
+    email: string,
+    password: string,
+  ): Promise<Result<User, Error>> {
+    try {
+      const userCredential: UserCredential =
+        await createUserWithEmailAndPassword(auth, email, password);
+
+      const user = new User(
+        userCredential.user.uid,
+        userCredential.user.email!,
+        password,
+        new Date(userCredential.user.metadata.creationTime!),
+        new Date(userCredential.user.metadata.lastSignInTime!),
+      );
+
+      return { type: 'success', value: user };
+    } catch (error) {
+      return { type: 'error', throwable: error as Error };
+    }
+  }
+
+  async login(email: string, password: string): Promise<Result<User, Error>> {
+    try {
+      const userCredential: UserCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password,
+      );
+
+      const user = new User(
+        userCredential.user.uid,
+        userCredential.user.email!,
+        password,
+        new Date(userCredential.user.metadata.creationTime!),
+        new Date(userCredential.user.metadata.lastSignInTime!),
+      );
+
+      return { type: 'success', value: user };
+    } catch (error) {
+      return { type: 'error', throwable: error as Error };
+    }
+  }
+
+  async logout(): Promise<Result<void, Error>> {
+    try {
+      await signOut(auth);
+      return { type: 'success', value: undefined };
+    } catch (error) {
       return { type: 'error', throwable: error as Error };
     }
   }
