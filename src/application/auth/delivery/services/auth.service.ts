@@ -4,7 +4,6 @@ import { LoginDto } from '../dtos/login.dto';
 import { Result } from 'src/application/core/types/result';
 import { RegisterDto } from '../dtos/register.dto';
 import { UserResponseDto } from '../dtos/user.dto';
-import { AuthDataSource } from '../../infrastructure/datasource/auth.datasource';
 import {
   ILoginUserUseCase,
   IRegisterUserUseCase,
@@ -17,7 +16,6 @@ import {
 @Injectable()
 export class AuthService implements IAuthService {
   constructor(
-    private readonly authDataSource: AuthDataSource,
     @Inject('ILoginUserUseCase')
     private readonly loginUseCase: ILoginUserUseCase,
     @Inject('IRegisterUseCase')
