@@ -32,11 +32,30 @@ export class AuthService implements IAuthService {
     private readonly deleteUserUseCase: IDeleteUserUseCase,
   ) {}
   async login(loginDto: LoginDto): Promise<Result<UserResponseDto, Error>> {
-    const result = await this.loginUseCase.execute(loginDto);
-    if (result.type === 'error') {
-      return { type: 'error', throwable: result.throwable };
+    const tokenResult = await this.loginUseCase.execute(loginDto);
+    if (tokenResult.type === 'error') {
+      return { type: 'error', throwable: tokenResult.throwable };
     }
-    return { type: 'success', value: result.value };
+
+    const userResult = await this.findUserByEmailUseCase.execute(
+      loginDto.email,
+    );
+    if (userResult.type === 'error' || !userResult.value) {
+      return {
+        type: 'error',
+        throwable: new Error('User not found after login'),
+      };
+    }
+
+    const userResponse: UserResponseDto = {
+      uid: userResult.value.id,
+      email: userResult.value.email,
+      token: tokenResult.value,
+      createdAt: userResult.value.createdAt,
+      updatedAt: userResult.value.updatedAt,
+    };
+
+    return { type: 'success', value: userResponse };
   }
 
   async logout(): Promise<Result<void, Error>> {

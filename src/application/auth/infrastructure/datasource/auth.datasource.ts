@@ -103,7 +103,7 @@ export class AuthDataSource {
     }
   }
 
-  async login(email: string, password: string): Promise<Result<User, Error>> {
+  async login(email: string, password: string): Promise<Result<string, Error>> {
     try {
       const userCredential: UserCredential = await signInWithEmailAndPassword(
         auth,
@@ -111,15 +111,9 @@ export class AuthDataSource {
         password,
       );
 
-      const user = new User(
-        userCredential.user.uid,
-        userCredential.user.email!,
-        password,
-        new Date(userCredential.user.metadata.creationTime!),
-        new Date(userCredential.user.metadata.lastSignInTime!),
-      );
+      const token = await userCredential.user.getIdToken();
 
-      return { type: 'success', value: user };
+      return { type: 'success', value: token };
     } catch (error) {
       return { type: 'error', throwable: error as Error };
     }

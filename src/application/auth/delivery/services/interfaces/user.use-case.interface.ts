@@ -13,7 +13,7 @@ export interface IRegisterUserUseCase {
 }
 
 export interface ILoginUserUseCase {
-  execute(loginDto: LoginDto): Promise<Result<UserResponseDto, Error>>;
+  execute(loginDto: LoginDto): Promise<Result<string, Error>>;
 }
 
 export interface ILogoutUserUseCase {

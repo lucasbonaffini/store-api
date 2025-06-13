@@ -41,7 +41,7 @@ export class UserRepository implements IUserRepository {
   async loginUser(
     email: string,
     password: string,
-  ): Promise<Result<User, Error>> {
+  ): Promise<Result<string, Error>> {
     return await this.authDataSource.login(email, password);
   }
 

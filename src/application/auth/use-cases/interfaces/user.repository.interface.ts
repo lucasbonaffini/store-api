@@ -6,6 +6,6 @@ export interface IUserRepository {
   getUserByEmail(email: string): Promise<Result<User | null, Error>>;
   deleteUser(uid: string): Promise<Result<void, Error>>;
   registerUser(email: string, password: string): Promise<Result<User, Error>>;
-  loginUser(email: string, password: string): Promise<Result<User, Error>>;
+  loginUser(email: string, password: string): Promise<Result<string, Error>>;
   logoutUser(): Promise<Result<void, Error>>;
 }

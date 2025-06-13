@@ -7,6 +7,6 @@ export interface IUserDataSource {
   delete(uid: string): Promise<Result<void, Error>>;
   exists(email: string): Promise<Result<boolean, Error>>;
   register(email: string, password: string): Promise<Result<User, Error>>;
-  login(email: string, password: string): Promise<Result<User, Error>>;
+  login(email: string, password: string): Promise<Result<string, Error>>;
   logout(): Promise<Result<void, Error>>;
 }
