@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Inject,
+  Delete,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { LoginDto } from '../dtos/login.dto';
@@ -85,5 +86,26 @@ export class AuthController {
   })
   async findUserByEmail(@Body('email') email: string) {
     return await this.authService.findUserByEmail(email);
+  }
+
+  @Delete(':uid')
+  @ApiOperation({ summary: 'Delete user by UID' })
+  @ApiParam({
+    name: 'uid',
+    required: true,
+    description: 'UID of the user to delete',
+    type: String,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User deleted successfully',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+  })
+  async deleteUser(@Body('uid') uid: string): Promise<{ message: string }> {
+    await this.authService.deleteUser(uid);
+    return { message: 'User deleted successfully' };
   }
 }

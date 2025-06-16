@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
-import { DatabaseException } from '../../delivery/exceptions';
+import { DatabaseException } from '../exceptions';
 
 @Injectable()
 export class FirebaseErrorMapper {

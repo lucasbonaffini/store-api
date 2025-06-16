@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Product } from '../../domain/entities/product.entity';
-import { ProductResponseDto } from '../../delivery/dtos/product.dto';
+import { ProductResponseDto } from '../dtos/product.dto';
 import {
   ApiResponse,
   PaginatedApiResponse,
   PaginationMeta,
-} from '../../delivery/dtos/firebase-product.dto';
+} from '../dtos/firebase-product.dto';
 
 @Injectable()
 export class FirebaseResponseMapper {

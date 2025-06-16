@@ -6,7 +6,7 @@ import { PaginatedResponse } from '../../domain/entities/pagination.entity';
 import { IProductRepository } from '../../use-cases/interfaces/product-repository.interface';
 import { FirebaseProductDataSource } from '../../infrastructure/datasources/firebase/product.firestore.datasource';
 import { FakeStoreDataSource } from '../../infrastructure/datasources/adapters/fakestore/fakestore.datasource';
-import { FirebaseToEntityMapper } from '../mappers/firebase-to-entity.mapper';
+import { FirebaseToEntityMapper } from '../../delivery/mappers/firebase-to-entity.mapper';
 import { FakeStoreToEntityMapper } from '../../infrastructure/mappers/fakestore-to-entity.mapper';
 import { PaginationQuery } from '../../delivery/dtos/firebase-product.dto';
 import {

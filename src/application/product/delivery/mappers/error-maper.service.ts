@@ -4,7 +4,7 @@ import {
   ProductNotFoundException,
   ExternalServiceException,
   DatabaseException,
-} from '../../delivery/exceptions';
+} from '../exceptions';
 
 @Injectable()
 export class ErrorMapperService {

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Product } from '../../domain/entities/product.entity';
-import { CreateProductDto } from '../../delivery/dtos/product.dto';
+import { CreateProductDto } from '../dtos/product.dto';
 import {
   FirebaseProductEntity,
   CreateFirebaseProductEntity,

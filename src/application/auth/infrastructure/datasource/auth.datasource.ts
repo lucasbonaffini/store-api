@@ -84,10 +84,12 @@ export class AuthDataSource {
   async register(
     email: string,
     password: string,
-  ): Promise<Result<User, Error>> {
+  ): Promise<Result<{ user: User; token: string }, Error>> {
     try {
       const userCredential: UserCredential =
         await createUserWithEmailAndPassword(auth, email, password);
+
+      const token = await userCredential.user.getIdToken();
 
       const user = new User(
         userCredential.user.uid,
@@ -97,7 +99,7 @@ export class AuthDataSource {
         new Date(userCredential.user.metadata.lastSignInTime!),
       );
 
-      return { type: 'success', value: user };
+      return { type: 'success', value: { user, token } };
     } catch (error) {
       return { type: 'error', throwable: error as Error };
     }

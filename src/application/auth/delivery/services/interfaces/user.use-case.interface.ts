@@ -2,14 +2,13 @@ import { Result } from 'src/application/core/types/result';
 import { User } from 'src/application/auth/domain/entities/user.entity';
 import { RegisterDto } from '../../dtos/register.dto';
 import { LoginDto } from '../../dtos/login.dto';
-import { UserResponseDto } from '../../dtos/user.dto';
 
 export interface IGetUsersUseCase {
   execute(): Promise<Result<User[], Error>>;
 }
 
 export interface IRegisterUserUseCase {
-  execute(registerDto: RegisterDto): Promise<Result<UserResponseDto, Error>>;
+  execute(registerDto: RegisterDto): Promise<Result<{ user: User; token: string }, Error>>;
 }
 
 export interface ILoginUserUseCase {

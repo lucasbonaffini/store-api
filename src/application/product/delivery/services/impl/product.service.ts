@@ -12,8 +12,8 @@ import {
   IUpdateStockUseCase,
   IDeleteProductUseCase,
 } from 'src/application/product/delivery/services/interfaces/product-use-case.interface';
-import { ErrorMapperService } from 'src/application/product/data/mappers/error-maper.service';
-import { ProductResponseMapper } from 'src/application/product/data/mappers/product-response.mapper';
+import { ErrorMapperService } from 'src/application/product/delivery/mappers/error-maper.service';
+import { ProductResponseMapper } from 'src/application/product/delivery/mappers/product-response.mapper';
 import {
   PaginatedApiResponse,
   ApiResponse,

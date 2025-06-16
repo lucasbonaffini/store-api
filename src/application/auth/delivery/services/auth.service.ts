@@ -63,7 +63,20 @@ export class AuthService implements IAuthService {
   async createUser(
     registerDto: RegisterDto,
   ): Promise<Result<UserResponseDto, Error>> {
-    return await this.registerUseCase.execute(registerDto);
+    const result = await this.registerUseCase.execute(registerDto);
+    if (result.type === 'error') {
+      return result;
+    }
+
+    const userResponse: UserResponseDto = {
+      uid: result.value.user.id,
+      email: result.value.user.email,
+      token: result.value.token,
+      createdAt: result.value.user.createdAt,
+      updatedAt: result.value.user.updatedAt,
+    };
+
+    return { type: 'success', value: userResponse };
   }
   async findAllUsers(): Promise<Result<UserResponseDto[], Error>> {
     try {
