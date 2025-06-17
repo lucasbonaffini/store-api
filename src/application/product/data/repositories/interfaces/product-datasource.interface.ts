@@ -1,23 +1,27 @@
 import { Result } from 'src/application/core/types/result';
 import {
-  PrismaProductDto,
-  CreatePrismaProductDto,
-} from 'src/application/product/delivery/dtos/prisma-product.dto';
+  FirebaseProductEntity,
+  CreateFirebaseProductEntity,
+  PaginatedFirebaseResponse,
+} from '../../../infrastructure/entities/firebase-product.entity';
 
 export interface IProductDataSource {
-  findAll(): Promise<Result<PrismaProductDto[], Error>>;
-  findById(id: number): Promise<Result<PrismaProductDto | null, Error>>;
+  findAll(
+    pageSize?: number,
+    cursor?: string,
+  ): Promise<Result<PaginatedFirebaseResponse, Error>>;
+  findById(id: string): Promise<Result<FirebaseProductEntity | null, Error>>;
   create(
-    productData: CreatePrismaProductDto,
-  ): Promise<Result<PrismaProductDto, Error>>;
+    productData: CreateFirebaseProductEntity,
+  ): Promise<Result<FirebaseProductEntity, Error>>;
   update(
-    id: number,
-    productData: Partial<CreatePrismaProductDto>,
-  ): Promise<Result<PrismaProductDto, Error>>;
+    id: string,
+    productData: Partial<CreateFirebaseProductEntity>,
+  ): Promise<Result<FirebaseProductEntity, Error>>;
   updateStock(
-    id: number,
+    id: string,
     stock: number,
-  ): Promise<Result<PrismaProductDto, Error>>;
-  delete(id: number): Promise<Result<void, Error>>;
-  exists(id: number): Promise<Result<boolean, Error>>;
+  ): Promise<Result<FirebaseProductEntity, Error>>;
+  delete(id: string): Promise<Result<void, Error>>;
+  exists(id: string): Promise<Result<boolean, Error>>;
 }

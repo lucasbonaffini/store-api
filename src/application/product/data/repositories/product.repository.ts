@@ -2,190 +2,228 @@ import { Injectable, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Product } from '../../domain/entities/product.entity';
+import { PaginatedResponse } from '../../domain/entities/pagination.entity';
 import { IProductRepository } from '../../use-cases/interfaces/product-repository.interface';
-import { IProductDataSource } from './interfaces/product-datasource.interface';
+import { FirebaseProductDataSource } from '../../infrastructure/datasources/firebase/product.firestore.datasource';
 import { FakeStoreDataSource } from '../../infrastructure/datasources/adapters/fakestore/fakestore.datasource';
-import { ProductResponseMapper } from '../mappers/product-response.mapper';
-import { PrismaToEntityMapper } from '../mappers/prisma-to-entity.mapper';
-import { ProductResponseDto } from '../../delivery/dtos/product.dto';
+import { FirebaseToEntityMapper } from '../../delivery/mappers/firebase-to-entity.mapper';
+import { FakeStoreToEntityMapper } from '../../infrastructure/mappers/fakestore-to-entity.mapper';
+import { PaginationQuery } from '../../delivery/dtos/firebase-product.dto';
 import {
   ProductNotFoundException,
   ExternalServiceException,
-} from '../../domain/exceptions';
+} from '../../delivery/exceptions';
 import { Result } from 'src/application/core/types/result';
 
 @Injectable()
 export class ProductRepository implements IProductRepository {
   constructor(
-    @Inject('IProductDataSource')
-    private readonly prismaDataSource: IProductDataSource,
+    @Inject(FirebaseProductDataSource)
+    private readonly firebaseDataSource: FirebaseProductDataSource,
     @Inject(FakeStoreDataSource)
     private readonly fakeStoreDataSource: FakeStoreDataSource,
     @Inject(CACHE_MANAGER)
     private cacheManager: Cache,
-    @Inject(ProductResponseMapper)
-    private readonly responseMapper: ProductResponseMapper,
-    @Inject(PrismaToEntityMapper)
-    private readonly entityMapper: PrismaToEntityMapper,
+    @Inject(FirebaseToEntityMapper)
+    private readonly firebaseEntityMapper: FirebaseToEntityMapper,
+    @Inject(FakeStoreToEntityMapper)
+    private readonly fakeStoreEntityMapper: FakeStoreToEntityMapper,
   ) {}
 
-  async getProducts(): Promise<
-    Result<ProductResponseDto[], ExternalServiceException | Error>
+  async getProducts(
+    pagination?: PaginationQuery,
+  ): Promise<
+    Result<PaginatedResponse<Product>, ExternalServiceException | Error>
   > {
+    const limit = pagination?.limit || 10;
+    const cursor = pagination?.cursor;
+    const cacheKey = `products_${limit}_${cursor || 'first'}`;
+
     const cachedProducts =
-      await this.cacheManager.get<ProductResponseDto[]>('all_products');
+      await this.cacheManager.get<PaginatedResponse<Product>>(cacheKey);
     if (cachedProducts) {
       return { type: 'success', value: cachedProducts };
     }
 
-    const localProductsResult = await this.prismaDataSource.findAll();
+    const firebaseResult = await this.firebaseDataSource.findAll(limit, cursor);
 
-    if (localProductsResult.type === 'error') {
-      return localProductsResult;
+    if (firebaseResult.type === 'error') {
+      return {
+        type: 'error',
+        throwable: firebaseResult.throwable,
+      };
     }
 
-    const localPrismaData = localProductsResult.value;
+    const firebaseData = firebaseResult.value;
 
-    if (localPrismaData.length > 0) {
-      const localProducts =
-        this.entityMapper.toDomainEntityList(localPrismaData);
-      const responseDto = this.responseMapper.toResponseDtoList(localProducts);
-      await this.cacheManager.set('all_products', responseDto, 3600);
-      return { type: 'success', value: responseDto };
+    if (firebaseData.data.length > 0) {
+      const products = this.firebaseEntityMapper.toDomainEntityList(
+        firebaseData.data,
+      );
+
+      const response: PaginatedResponse<Product> = {
+        data: products,
+        pagination: firebaseData.pagination,
+      };
+
+      await this.cacheManager.set(cacheKey, response, 3600);
+      return { type: 'success', value: response };
     }
 
     const fakeStoreProducts = await this.fakeStoreDataSource.getProducts();
-    const products = fakeStoreProducts.map((product) =>
-      Product.fromFakeStore(product),
+    const products = this.fakeStoreEntityMapper.toDomainEntityList(
+      fakeStoreProducts.slice(0, limit),
     );
 
-    const responseDto = this.responseMapper.toResponseDtoList(products);
-    await this.cacheManager.set('all_products', responseDto, 3600);
-    return { type: 'success', value: responseDto };
+    const response: PaginatedResponse<Product> = {
+      data: products,
+      pagination: {
+        hasNextPage: fakeStoreProducts.length > limit,
+        nextCursor: null,
+        totalInPage: products.length,
+      },
+    };
+
+    await this.cacheManager.set(cacheKey, response, 3600);
+    return { type: 'success', value: response };
   }
 
   async getProductById(
-    id: number,
+    id: string,
   ): Promise<
     Result<
-      ProductResponseDto,
+      Product | null,
       ProductNotFoundException | ExternalServiceException | Error
     >
   > {
     const cacheKey = `product_${id}`;
 
-    const cachedProduct =
-      await this.cacheManager.get<ProductResponseDto>(cacheKey);
+    const cachedProduct = await this.cacheManager.get<Product>(cacheKey);
     if (cachedProduct) {
       return { type: 'success', value: cachedProduct };
     }
 
-    const localProductResult = await this.prismaDataSource.findById(id);
+    const firebaseResult = await this.firebaseDataSource.findById(id);
 
-    if (localProductResult.type === 'error') {
-      return localProductResult;
+    if (firebaseResult.type === 'error') {
+      return {
+        type: 'error',
+        throwable: firebaseResult.throwable,
+      };
     }
 
-    const localPrismaData = localProductResult.value;
+    const firebaseData = firebaseResult.value;
 
-    if (localPrismaData) {
-      const localProduct = this.entityMapper.toDomainEntity(localPrismaData);
-      const responseDto = this.responseMapper.toResponseDto(localProduct);
-      await this.cacheManager.set(cacheKey, responseDto, 3600);
-      return { type: 'success', value: responseDto };
+    if (firebaseData) {
+      const product = this.firebaseEntityMapper.toDomainEntity(firebaseData);
+      await this.cacheManager.set(cacheKey, product, 3600);
+      return { type: 'success', value: product };
     }
 
-    const fakeStoreProduct = await this.fakeStoreDataSource.getProductById(id);
+    const fakeStoreProduct = await this.fakeStoreDataSource.getProductById(
+      parseInt(id),
+    );
 
     if (!fakeStoreProduct) {
-      const error = new ProductNotFoundException(id);
-      return { type: 'error', throwable: error };
+      return { type: 'success', value: null };
     }
 
-    const product = Product.fromFakeStore(fakeStoreProduct);
-    const responseDto = this.responseMapper.toResponseDto(product);
-
-    await this.cacheManager.set(cacheKey, responseDto, 3600);
-    return { type: 'success', value: responseDto };
+    const product = this.fakeStoreEntityMapper.toDomainEntity(fakeStoreProduct);
+    await this.cacheManager.set(cacheKey, product, 3600);
+    return { type: 'success', value: product };
   }
 
-  async createProduct(
-    product: Product,
-  ): Promise<Result<ProductResponseDto, Error>> {
-    const createPrismaDto =
-      this.entityMapper.fromDomainEntityToCreateDto(product);
-    const createdProductResult =
-      await this.prismaDataSource.create(createPrismaDto);
+  async createProduct(product: Product): Promise<Result<Product, Error>> {
+    const createFirebaseEntity =
+      this.firebaseEntityMapper.fromDomainEntityToCreateEntity(product);
+    const createdResult =
+      await this.firebaseDataSource.create(createFirebaseEntity);
 
-    if (createdProductResult.type === 'error') {
-      return createdProductResult;
+    if (createdResult.type === 'error') {
+      return {
+        type: 'error',
+        throwable: createdResult.throwable,
+      };
     }
 
-    const createdPrismaData = createdProductResult.value;
-    const createdProduct = this.entityMapper.toDomainEntity(createdPrismaData);
-    const responseDto = this.responseMapper.toResponseDto(createdProduct);
+    const createdFirebaseData = createdResult.value;
+    const createdProduct =
+      this.firebaseEntityMapper.toDomainEntity(createdFirebaseData);
 
-    await this.cacheManager.del('all_products');
+    await this.cacheManager.del('products_*');
 
-    return { type: 'success', value: responseDto };
+    return { type: 'success', value: createdProduct };
   }
 
   async updateStock(
-    id: number,
+    id: string,
     stock: number,
-  ): Promise<Result<ProductResponseDto, ProductNotFoundException | Error>> {
-    const productExistsResult = await this.prismaDataSource.exists(id);
+  ): Promise<Result<Product, ProductNotFoundException | Error>> {
+    const existsResult = await this.firebaseDataSource.exists(id);
 
-    if (productExistsResult.type === 'error') {
-      return productExistsResult;
+    if (existsResult.type === 'error') {
+      return {
+        type: 'error',
+        throwable: existsResult.throwable,
+      };
     }
 
-    if (!productExistsResult.value) {
-      const error = new ProductNotFoundException(id);
-      return { type: 'error', throwable: error };
+    if (!existsResult.value) {
+      return {
+        type: 'error',
+        throwable: new ProductNotFoundException(id),
+      };
     }
 
-    const updatedProductResult = await this.prismaDataSource.updateStock(
-      id,
-      stock,
-    );
+    const updatedResult = await this.firebaseDataSource.updateStock(id, stock);
 
-    if (updatedProductResult.type === 'error') {
-      return updatedProductResult;
+    if (updatedResult.type === 'error') {
+      return {
+        type: 'error',
+        throwable: updatedResult.throwable,
+      };
     }
 
-    const updatedPrismaData = updatedProductResult.value;
-    const updatedProduct = this.entityMapper.toDomainEntity(updatedPrismaData);
-    const responseDto = this.responseMapper.toResponseDto(updatedProduct);
+    const updatedFirebaseData = updatedResult.value;
+    const updatedProduct =
+      this.firebaseEntityMapper.toDomainEntity(updatedFirebaseData);
 
     await this.cacheManager.del(`product_${id}`);
-    await this.cacheManager.del('all_products');
+    await this.cacheManager.del('products_*');
 
-    return { type: 'success', value: responseDto };
+    return { type: 'success', value: updatedProduct };
   }
 
   async deleteProduct(
-    id: number,
+    id: string,
   ): Promise<Result<void, ProductNotFoundException | Error>> {
-    const productExistsResult = await this.prismaDataSource.exists(id);
+    const existsResult = await this.firebaseDataSource.exists(id);
 
-    if (productExistsResult.type === 'error') {
-      return productExistsResult;
+    if (existsResult.type === 'error') {
+      return {
+        type: 'error',
+        throwable: existsResult.throwable,
+      };
     }
 
-    if (!productExistsResult.value) {
-      const error = new ProductNotFoundException(id);
-      return { type: 'error', throwable: error };
+    if (!existsResult.value) {
+      return {
+        type: 'error',
+        throwable: new ProductNotFoundException(id),
+      };
     }
 
-    const deleteResult = await this.prismaDataSource.delete(id);
+    const deleteResult = await this.firebaseDataSource.delete(id);
 
     if (deleteResult.type === 'error') {
-      return deleteResult;
+      return {
+        type: 'error',
+        throwable: deleteResult.throwable,
+      };
     }
 
     await this.cacheManager.del(`product_${id}`);
-    await this.cacheManager.del('all_products');
+    await this.cacheManager.del('products_*');
 
     return { type: 'success', value: undefined };
   }

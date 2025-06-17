@@ -1,12 +1,14 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { ProductResponseDto } from '../../delivery/dtos/product.dto';
 import { IProductRepository } from '../interfaces/product-repository.interface';
 import {
   ExternalServiceException,
   ProductNotFoundException,
-} from '../../domain/exceptions';
+} from '../../delivery/exceptions';
 import { IGetProductsUseCase } from '../../delivery/services/interfaces/product-use-case.interface';
 import { Result } from 'src/application/core/types/result';
+import { Product } from '../../domain/entities/product.entity';
+import { PaginatedResponse } from '../../domain/entities/pagination.entity';
+import { PaginationQuery } from '../../delivery/dtos/firebase-product.dto';
 
 @Injectable()
 export class GetProductsUseCase implements IGetProductsUseCase {
@@ -15,16 +17,19 @@ export class GetProductsUseCase implements IGetProductsUseCase {
     private readonly productRepository: IProductRepository,
   ) {}
 
-  async execute(): Promise<
-    Result<ProductResponseDto[], ExternalServiceException | Error>
+  async execute(
+    pagination?: PaginationQuery,
+  ): Promise<
+    Result<PaginatedResponse<Product>, ExternalServiceException | Error>
   > {
-    return await this.productRepository.getProducts();
+    return await this.productRepository.getProducts(pagination);
   }
+
   async executeById(
-    id: number,
+    id: string,
   ): Promise<
     Result<
-      ProductResponseDto,
+      Product | null,
       ProductNotFoundException | ExternalServiceException | Error
     >
   > {

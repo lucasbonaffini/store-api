@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   HttpCode,
   HttpStatus,
   ParseIntPipe,
@@ -19,6 +20,7 @@ import {
   ApiOperation,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { IProductService } from './interfaces/product.service.interface';
 import {
@@ -39,13 +41,28 @@ export class ProductController {
   @CacheKey('all_products')
   @CacheTTL(300)
   @ApiOperation({ summary: 'Get all products with stock' })
+  @ApiQuery({
+    name: 'cursor',
+    required: false,
+    type: String,
+    description: 'Cursor for pagination (product ID to start after)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 10)',
+  })
   @ApiResponse({
     status: 200,
     description: 'Returns all products with stock info',
     type: [ProductResponseDto],
   })
-  async findAll() {
-    return this.productService.getProducts();
+  async findAll(
+    @Query('cursor') cursor?: string,
+    @Query('limit') limit: number = 10,
+  ) {
+    return await this.productService.getProducts({ cursor, limit });
   }
 
   @Get(':id')
@@ -59,7 +76,7 @@ export class ProductController {
     type: ProductResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Product not found' })
-  async findOne(@Param('id', ParseIntPipe) id: number) {
+  async findOne(@Param('id', ParseIntPipe) id: string) {
     return await this.productService.getProductById(id);
   }
 
@@ -87,7 +104,7 @@ export class ProductController {
   })
   @ApiResponse({ status: 404, description: 'Product not found' })
   async updateStock(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIntPipe) id: string,
     @Body() updateStockDto: UpdateStockDto,
   ) {
     return await this.productService.updateStock(id, updateStockDto);
@@ -99,7 +116,7 @@ export class ProductController {
   @ApiResponse({ status: 204, description: 'Product deleted successfully' })
   @ApiResponse({ status: 404, description: 'Product not found' })
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    await this.productService.deleteProduct(id);
+  async remove(@Param('id', ParseIntPipe) id: string) {
+    return await this.productService.deleteProduct(id);
   }
 }
