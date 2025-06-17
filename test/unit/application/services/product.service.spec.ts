@@ -1,13 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ProductService } from '../../../../src/application/services/product.service';
-import { Product } from '../../../../src/domain/entities/product.entity';
+import { ProductService } from '../../../../src/application/product/use-cases/product.service';
+import { Product } from '../../../../src/application/product/domain/entities/product.entity';
 import {
   CreateProductDto,
   UpdateStockDto,
-} from '../../../../src/application/dtos/product.dto';
-import { ProductNotFoundException } from '../../../../src/domain/exceptions';
+} from '../../../../src/application/product/delivery/dtos/product.dto';
+import { ProductNotFoundException } from '../../../../src/application/product/domain/exceptions';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { FakeStoreService } from '../../../../src/infrastructure/adapters/fakestore/fakestore.service';
+import { FakeStoreDataSource } from '../../../../src/application/product/infrastructure/datasources/adapters/fakestore/fakestore.datasource';
 
 describe('ProductService', () => {
   let service: ProductService;
@@ -72,7 +72,7 @@ describe('ProductService', () => {
           useValue: mockCacheManager,
         },
         {
-          provide: FakeStoreService,
+          provide: FakeStoreDataSource,
           useValue: mockFakeStoreService,
         },
       ],

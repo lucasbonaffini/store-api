@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
-import { ProductController } from '../../../../src/infrastructure/controllers/product.controller';
-import { ProductService } from '../../../../src/application/services/product.service';
+import { ProductController } from '../../../../src/application/product/delivery/controllers/product.controller';
+import { ProductService } from '../../../../src/application/product/use-cases/product.service';
 import {
   CreateProductDto,
   UpdateStockDto,
-} from '../../../../src/application/dtos/product.dto';
-import { Product } from '../../../../src/domain/entities/product.entity';
+} from '../../../../src/application/product/delivery/dtos/product.dto';
+import { Product } from '../../../../src/application/product/domain/entities/product.entity';
 
 describe('ProductController', () => {
   let controller: ProductController;
