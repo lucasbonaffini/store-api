@@ -11,7 +11,9 @@ export class RegisterUseCase {
     private readonly userRepository: IUserRepository,
   ) {}
 
-  async execute(registerDto: RegisterDto): Promise<Result<{ user: User; token: string }, Error>> {
+  async execute(
+    registerDto: RegisterDto,
+  ): Promise<Result<{ user: User; token: string }, Error>> {
     return await this.userRepository.registerUser(
       registerDto.email,
       registerDto.password,
