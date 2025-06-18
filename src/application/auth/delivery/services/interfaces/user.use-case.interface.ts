@@ -8,7 +8,9 @@ export interface IGetUsersUseCase {
 }
 
 export interface IRegisterUserUseCase {
-  execute(registerDto: RegisterDto): Promise<Result<{ user: User; token: string }, Error>>;
+  execute(
+    registerDto: RegisterDto,
+  ): Promise<Result<{ user: User; token: string }, Error>>;
 }
 
 export interface ILoginUserUseCase {

@@ -6,7 +6,10 @@ export interface IUserDataSource {
   findAll(): Promise<Result<User[], Error>>;
   delete(uid: string): Promise<Result<void, Error>>;
   exists(email: string): Promise<Result<boolean, Error>>;
-  register(email: string, password: string): Promise<Result<{ user: User; token: string }, Error>>;
+  register(
+    email: string,
+    password: string,
+  ): Promise<Result<{ user: User; token: string }, Error>>;
   login(email: string, password: string): Promise<Result<string, Error>>;
   logout(): Promise<Result<void, Error>>;
 }
